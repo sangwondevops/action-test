@@ -10,7 +10,7 @@ jobs:
       - name: check file list
         run: |
           ls 
-          cat REAEME.md
+          cat README.md
 
   default-branch-checkout:
     runs-on: ubuntu-latest
@@ -19,7 +19,7 @@ jobs:
       - name: check file list
         run: |
           ls
-          cat REAEME.md
+          cat README.md
   
   select-branch-checkout:
     runs-on: ubuntu-latest
@@ -30,7 +30,7 @@ jobs:
       - name: check file list
         run: |
           ls
-          cat REAEME.md
+          cat README.md
   
   multiple-repo-checkout:
     runs-on: ubuntu-latest
@@ -42,14 +42,13 @@ jobs:
       - name: check file list
         run: |
           ls
-          cd
           cat README.md
       - uses: actions/checkout@v3
         with:
           repository: sangwondevops/action-module
           ref: main
           path: module
-      - name: check file list
+      - name: check file list (multiple-repo)
         run: |
           ls
           cd module
