@@ -1,0 +1,56 @@
+name: basic_checkout
+on:
+  workflow_dispatch:
+
+
+jobs:
+  no-checkout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: check file list
+        run: |
+          ls 
+          cat REAEME.md
+
+  default-branch-checkout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: check file list
+        run: |
+          ls
+          cat REAEME.md
+  
+  select-branch-checkout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: main
+      - name: check file list
+        run: |
+          ls
+          cat REAEME.md
+  
+  multiple-repo-checkout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: part1
+      - name: check file list
+        run: |
+          ls
+          cd
+          cat README.md
+      - uses: actions/checkout@v3
+        with:
+          repository: sangwondevops/action-module
+          ref: main
+          path: module
+      - name: check file list
+        run: |
+          ls
+          cd module
+          cat README.md
