@@ -36,7 +36,7 @@ jobs:
           echo  "The logLevel are ${{ inputs.logLevel }}"
           echo  "The environment are ${{ inputs.environment }}"
           echo  "The environment are ${{ inputs.environment }}"
-      - name: repo_environment
+      - name: action test
         run: |
           echo ${{ vars.ACTION_TEST }}
           
