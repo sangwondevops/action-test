@@ -4,10 +4,8 @@ on:
   push:
     branches: [ part1 ]
 jobs:
-  build:
-
+  cache:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
@@ -24,7 +22,11 @@ jobs:
           ${{ runner.os }}-node-
           
     - name: Install dependencies
-      run: npm ci
+      run: |
+        cd cache
+        npm ci
 
     - name: Test
-      run: npm test
+      run: |
+        cd cache
+        npm test
