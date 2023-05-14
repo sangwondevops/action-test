@@ -28,6 +28,7 @@ jobs:
   print-tag:
     runs-on: ubuntu-latest
     if:  ${{ inputs.print_tags }} 
+    environment: ${{ inputs.environment }}
     steps:
       - name: Print the input tag to STDOUT
         run: |
