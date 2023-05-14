@@ -6,7 +6,7 @@ on:
     branches: [ "part1" ]
     paths:
       - 'filter/pr/*.txt'
-      # - '!filter/pr/basic.txt'
+      - '!filter/pr/basic.txt'
 
 jobs:
   build:
