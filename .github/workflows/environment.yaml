@@ -17,7 +17,7 @@ jobs:
           Name: Sangwon
       - name: org_environment
         run: |
-          echo ${{ env.ACTION_TEST }}
+          echo ${{ vars.ACTION_TEST }}
 
   repo_environment:
     runs-on: ubuntu-latest
@@ -31,7 +31,7 @@ jobs:
           Name: Sangwon
       - name: repo_environment
         run: |
-          echo ${{ env.ACTION_TEST }}
+          echo ${{ vars.ACTION_TEST }}
   
   base_environment:
     runs-on: ubuntu-latest
@@ -45,4 +45,4 @@ jobs:
           Name: Sangwon
       - name: repo_environment
         run: |
-          echo ${{ env.ACTION_TEST }}
+          echo ${{ vars.ACTION_TEST }}
