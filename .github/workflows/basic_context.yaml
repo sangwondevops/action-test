@@ -19,3 +19,14 @@ jobs:
         run: echo '${{ toJSON(strategy) }}'
       - name: Dump matrix context
         run: echo '${{ toJSON(matrix) }}'
+
+  github-context:
+    runs-on: ubuntu-latest
+    steps:
+      - name: github context
+        run: |
+          echo ${{ github.triggering_actor }}
+          echo ${{ github.workflow }}
+          echo ${{ github.workspace }}
+          echo ${{ github.ref }}
+          
