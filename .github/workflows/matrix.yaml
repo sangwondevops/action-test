@@ -1,8 +1,6 @@
-name: matrix_push
-
+name: matrix
 on:
-  push:
-    branches: [temp] #[part1]
+  workflow_dispatch:
 
 jobs:
 
