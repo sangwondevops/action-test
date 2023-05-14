@@ -6,12 +6,12 @@ jobs:
   upload_artifact:
     runs-on: ubuntu-latest
     steps:
-      - name: 3 + 7
-        run: |
-          expr 3 + 7 > sum.txt
       - name: mkdir result
         run: |
           mkdir -p result
+      - name: Add 3 + 7
+        run: |
+          expr 3 + 7 > result/sum.txt
       - name: Upload result
         uses: actions/upload-artifact@v3
         with:
