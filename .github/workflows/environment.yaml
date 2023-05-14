@@ -1,0 +1,48 @@
+name: environment
+on:
+  workflow_dispatch:
+
+env:
+  DAY_OF_WEEK: Monday
+
+jobs:
+  org_environment:
+    runs-on: ubuntu-latest
+    env:
+      Greeting: Hello
+    steps:
+      - name: echo ENV 
+        run: echo "$Greeting $Name. Today is $DAY_OF_WEEK!"
+        env:
+          Name: Sangwon
+      - name: org_environment
+        run: |
+          echo ${{ env.ACTION_TEST }}
+
+  repo_environment:
+    runs-on: ubuntu-latest
+    env:
+      Greeting: Hello-World
+      DAY_OF_WEEK: Sunday
+    steps:
+      - name: echo ENV 
+        run: echo "$Greeting $Name. Today is $DAY_OF_WEEK!"
+        env:
+          Name: Sangwon
+      - name: repo_environment
+        run: |
+          echo ${{ env.ACTION_TEST }}
+  
+  base_environment:
+    runs-on: ubuntu-latest
+    env:
+      Greeting: Hello
+    environment: test
+    steps:
+      - name: echo ENV 
+        run: echo "$Greeting $Name. Today is $DAY_OF_WEEK!"
+        env:
+          Name: Sangwon
+      - name: repo_environment
+        run: |
+          echo ${{ env.ACTION_TEST }}
