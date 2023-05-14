@@ -20,7 +20,7 @@ jobs:
       - name: Dump matrix context
         run: echo '${{ toJSON(matrix) }}'
 
-  github-context:
+  github_context:
     runs-on: ubuntu-latest
     steps:
       - name: github context
@@ -28,5 +28,5 @@ jobs:
           echo ${{ github.triggering_actor }}
           echo ${{ github.workflow }}
           echo ${{ github.workspace }}
-          echo ${{ github.ref }}
+          echo ${{ github.ref_name }}
           
