@@ -23,10 +23,10 @@ jobs:
           
     - name: Install dependencies
       run: |
-        cd cache
+        cd my-app
         npm ci
 
     - name: Test
       run: |
-        cd cache
+        cd my-app
         npm test
