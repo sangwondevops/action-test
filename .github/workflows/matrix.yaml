@@ -4,17 +4,17 @@ on:
 
 jobs:
 
-  # default_matrix:
-  #   strategy:
-  #     matrix:
-  #       os: [macos-latest, windows-latest, ubuntu-latest]
-  #       version: [12, 14, 16]
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #   - name: echo matrix value
-  #     run: |
-  #       echo ${{ matrix.os }}
-  #       echo ${{ matrix.version }}
+  default_matrix:
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        version: [12, 14, 16]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: echo matrix value
+      run: |
+        echo ${{ matrix.os }}
+        echo ${{ matrix.version }}
 
   # max_parallel_matrix:
   #   strategy:
@@ -76,18 +76,32 @@ jobs:
   #       echo ${{ matrix.os }}
   #       echo ${{ matrix.version }}
 
+  # include_only_matrix:
+  #   strategy:
+  #     matrix:
+  #       include:
+  #         - os: windows-latest
+  #           version: 12
+  #         - os: windows-latest
+  #           version: 16
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #   - name: echo matrix value
+  #     run: |
+  #       echo ${{ matrix.os }}
+  #       echo ${{ matrix.version }}
   
-  exclude_matrix:
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
-        version: [12, 14, 16]
-        exclude:
-          - os: windows-latest
-            version: 12
-    runs-on: ${{ matrix.os }}
-    steps:
-    - name: echo matrix value
-      run: |
-        echo ${{ matrix.os }}
-        echo ${{ matrix.version }}
+  # exclude_matrix:
+  #   strategy:
+  #     matrix:
+  #       os: [macos-latest, windows-latest, ubuntu-latest]
+  #       version: [12, 14, 16]
+  #       exclude:
+  #         - os: windows-latest
+  #           version: 12
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #   - name: echo matrix value
+  #     run: |
+  #       echo ${{ matrix.os }}
+  #       echo ${{ matrix.version }}
