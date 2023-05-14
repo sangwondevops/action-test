@@ -9,11 +9,14 @@ jobs:
       - name: 3 + 7
         run: |
           expr 3 + 7 > sum.txt
+      - name: mkdir result
+        run: |
+          mkdir -p result
       - name: Upload result
         uses: actions/upload-artifact@v3
         with:
-          name: calculator
-          path: calculator/sum.txt
+          name: result
+          path: result/sum.txt
       - name: check file list
         run: |
           ls 
@@ -26,13 +29,13 @@ jobs:
       - name: Download result
         uses: actions/download-artifact@v3
         with:
-          name: calculator
-          path: calculator
+          name: result
+          path: result
       - name: check file list
         run: |
           ls 
       - name: Print the final result
         run: |
-          value=`cat calculator/sum.txt`
+          value=`cat result/sum.txt`
           echo The result is $value
           
