@@ -7,7 +7,7 @@ jobs:
   check_payload:
     runs-on: ubuntu-latest
     steps:
-      - name: update kubeconfig
+      - name: check payload
         run: |
           echo ${{ github.event.client_payload.name }}
           echo ${{ github.event.client_payload.count }}
