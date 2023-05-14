@@ -1,0 +1,33 @@
+name: if_condition
+on:
+  workflow_dispatch:
+
+jobs:
+  default_job:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: force exit 1
+        run: |
+          exit 1
+          echo '${{ toJSON(steps) }}'
+
+  success_job:
+    runs-on: ubuntu-latest
+    needs: [default_job]
+    steps:
+      - uses: actions/checkout@v3
+      - name: echo
+        run: |
+          echo "success_job"
+          
+  fail_job:
+    runs-on: ubuntu-latest
+    needs: [default_job]
+    if: |
+      needs.default_job.result == 'failure'
+    steps:
+      - uses: actions/checkout@v3
+      - name: echo
+        run: |
+          echo "fail_job"
