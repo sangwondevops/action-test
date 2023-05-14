@@ -22,7 +22,6 @@ jobs:
           ls 
 
   download_artifact:
-    name: Display results
     needs: upload_artifact
     runs-on: ubuntu-latest
     steps:
