@@ -1,0 +1,48 @@
+name: create_repo
+on:
+  workflow_dispatch:
+    inputs:
+      repo_prefix:
+        description: 'set repo prefix'
+        required: true
+        default: 'inflearn'
+        type: choice
+        options:
+          - inflearn
+          - github-action
+          - service
+      repo_name:
+        description: 'set repo name'
+        required: true
+        default: 'test'
+        type: string
+      use_template:
+        description: 'set template'
+        required: true
+        type: boolean
+      set_template:
+        description: 'set repo prefix'
+        required: true
+        default: 'action-test'
+        type: choice
+        options:
+          - action-test
+          - action-module
+      environment:
+        description: 'Environment to run tests against'
+        type: environment
+        required: false
+
+jobs:
+  create_repo_by_template:
+    runs-on: ubuntu-latest
+    if: |
+      ${{ inputs.use_template }} 
+    steps:
+      - name: create repository
+        run: |
+          gh repo create ${{ inputs.repo_prefix }}-${{ inputs.repo_name }} --template ${{ inputs.set_template }}
+  
+  
+          
+          
