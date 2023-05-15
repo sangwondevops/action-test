@@ -49,7 +49,7 @@ jobs:
   create_repo_by_default:
     runs-on: ubuntu-latest
     if: |
-      ${{ inputs.use_template }} == 'false'
+      ${{ inputs.use_template }} == "false"
     steps:
       - name: create repository
         run: |
