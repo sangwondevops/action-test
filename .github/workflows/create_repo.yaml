@@ -16,10 +16,6 @@ on:
         required: true
         default: 'test'
         type: string
-      use_template:
-        description: 'set template'
-        required: false
-        type: boolean
       set_template:
         description: 'set repo prefix'
         required: true
@@ -46,12 +42,34 @@ jobs:
           gh repo create sangwondevops/${{ inputs.repo_prefix }}-${{ inputs.repo_name }} --public --template sangwondevops/${{ inputs.set_template }}
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-      - name: create repository
-        if: ${{ inputs.use_template }} == 'false'
-        run: |
-          gh repo create sangwondevops/${{ inputs.repo_prefix }}-${{ inputs.repo_name }} --public --add-readme
+  
+  slack:
+    runs-on: ubuntu-latest
+    needs: [create_repo]
+    steps:
+      - name: Send custom JSON data to Slack workflow
+        id: slack
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          payload: |
+            {
+              "text": "Create repository",
+              "attachments": [
+                {
+                  "pretext": "Create repo finished",
+                  "color": "28a745",
+                  "fields": [
+                    {
+                      "title": "Create repo",
+                      "short": true,
+                      "value": "${{ inputs.repo_prefix }}-${{ inputs.repo_name }}"
+                    }
+                  ]
+                }
+              ]
+            }
         env:
-          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-
+          SLACK_WEBHOOK_URL: ${{ secrets.TEST_SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
           
           
