@@ -36,8 +36,7 @@ on:
 jobs:
   create_repo_by_template:
     runs-on: ubuntu-latest
-    if: |
-      ${{ inputs.use_template }} == "true"
+    if: ${{ inputs.use_template }} == "true"
     steps:
       - name: echo use_template
         run: |
@@ -50,8 +49,7 @@ jobs:
   
   create_repo_by_default:
     runs-on: ubuntu-latest
-    if: |
-      ${{ inputs.use_template }} == "false"
+    if: ${{ inputs.use_template }} == "false"
     steps:
       - name: echo use_template
         run: |
