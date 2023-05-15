@@ -18,7 +18,7 @@ on:
         type: string
       use_template:
         description: 'set template'
-        required: true
+        required: false
         type: boolean
       set_template:
         description: 'set repo prefix'
