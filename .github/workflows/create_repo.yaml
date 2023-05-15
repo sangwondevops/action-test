@@ -42,7 +42,8 @@ jobs:
       - name: create repository
         run: |
           gh repo create ${{ inputs.repo_prefix }}-${{ inputs.repo_name }} --template ${{ inputs.set_template }}
-  
-  
+        env:
+          GH_TOKEN: ${{ github.token }}
+
           
           
