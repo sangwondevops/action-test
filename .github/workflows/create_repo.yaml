@@ -19,6 +19,7 @@ on:
       use_template:
         description: 'set template'
         required: true
+        default: false
         type: boolean
       set_template:
         description: 'set repo prefix'
@@ -41,7 +42,18 @@ jobs:
     steps:
       - name: create repository
         run: |
-          gh repo create ${{ inputs.repo_prefix }}-${{ inputs.repo_name }} --public --template sangwondevops/${{ inputs.set_template }}
+          gh repo create sangwondevops/${{ inputs.repo_prefix }}-${{ inputs.repo_name }} --public --template sangwondevops/${{ inputs.set_template }}
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+  
+  create_repo_by_default:
+    runs-on: ubuntu-latest
+    if: |
+      ${{ inputs.use_template }} == 'false'
+    steps:
+      - name: create repository
+        run: |
+          gh repo create sangwondevops/${{ inputs.repo_prefix }}-${{ inputs.repo_name }} --public --add-readme
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
