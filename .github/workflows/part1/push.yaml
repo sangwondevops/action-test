@@ -1,4 +1,4 @@
-name: basic_push
+name: push
 on:
   push:
     branches: [ "temp" ]

@@ -1,4 +1,4 @@
-name: basic_checkout
+name: checkout
 on:
   workflow_dispatch:
 

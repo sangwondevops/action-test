@@ -24,20 +24,12 @@ on:
         options:
           - action-test
           - action-module
-      environment:
-        description: 'Environment to run tests against'
-        type: environment
-        required: false
 
 jobs:
   create_repo:
     runs-on: ubuntu-latest
     steps:
-      - name: echo use_template
-        run: |
-          echo ${{ inputs.use_template }}
       - name: create repository (Use template)
-        if: ${{ inputs.use_template }} == 'true'
         run: |
           gh repo create sangwondevops/${{ inputs.repo_prefix }}-${{ inputs.repo_name }} --public --template sangwondevops/${{ inputs.set_template }}
         env:

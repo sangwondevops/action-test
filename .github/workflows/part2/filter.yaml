@@ -1,4 +1,4 @@
-name: filter_pr
+name: filter
 
 on:
   pull_request:

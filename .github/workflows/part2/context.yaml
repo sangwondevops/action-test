@@ -1,4 +1,4 @@
-name: basic_context
+name: context
 on:
   workflow_dispatch:
 
