@@ -37,7 +37,7 @@ jobs:
   create_repo_by_template:
     runs-on: ubuntu-latest
     if: |
-      ${{ inputs.use_template }} 
+      ${{ inputs.use_template }} == 'true'
     steps:
       - name: create repository
         run: |
@@ -48,7 +48,7 @@ jobs:
   create_repo_by_default:
     runs-on: ubuntu-latest
     if: |
-      ${{ inputs.use_template }}
+      ${{ inputs.use_template }} == 'false'
     steps:
       - name: create repository
         run: |
