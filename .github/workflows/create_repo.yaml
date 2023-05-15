@@ -34,27 +34,20 @@ on:
         required: false
 
 jobs:
-  create_repo_by_template:
+  create_repo:
     runs-on: ubuntu-latest
-    if: ${{ inputs.use_template }} == "true"
     steps:
       - name: echo use_template
         run: |
           echo ${{ inputs.use_template }}
-      - name: create repository
+      - name: create repository (Use template)
+        if: ${{ inputs.use_template }} == 'true'
         run: |
           gh repo create sangwondevops/${{ inputs.repo_prefix }}-${{ inputs.repo_name }} --public --template sangwondevops/${{ inputs.set_template }}
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-  
-  create_repo_by_default:
-    runs-on: ubuntu-latest
-    if: ${{ inputs.use_template }} == "false"
-    steps:
-      - name: echo use_template
-        run: |
-          echo ${{ inputs.use_template }}
       - name: create repository
+        if: ${{ inputs.use_template }} == 'false'
         run: |
           gh repo create sangwondevops/${{ inputs.repo_prefix }}-${{ inputs.repo_name }} --public --add-readme
         env:
