@@ -43,7 +43,7 @@ jobs:
         run: |
           gh repo create ${{ inputs.repo_prefix }}-${{ inputs.repo_name }} --public --template ${{ inputs.set_template }}
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
           
           
