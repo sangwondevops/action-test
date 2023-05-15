@@ -39,6 +39,9 @@ jobs:
     if: |
       ${{ inputs.use_template }} == 'true'
     steps:
+      - name: echo use_template
+        run: |
+          echo ${{ inputs.use_template }}
       - name: create repository
         run: |
           gh repo create sangwondevops/${{ inputs.repo_prefix }}-${{ inputs.repo_name }} --public --template sangwondevops/${{ inputs.set_template }}
@@ -50,6 +53,9 @@ jobs:
     if: |
       ${{ inputs.use_template }} == 'false'
     steps:
+      - name: echo use_template
+        run: |
+          echo ${{ inputs.use_template }}
       - name: create repository
         run: |
           gh repo create sangwondevops/${{ inputs.repo_prefix }}-${{ inputs.repo_name }} --public --add-readme
