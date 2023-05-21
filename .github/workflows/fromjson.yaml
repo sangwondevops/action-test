@@ -21,4 +21,26 @@ jobs:
     strategy:
       matrix: ${{ fromJSON(needs.job1.outputs.matrix) }}
     steps:
-      - run: build
+      - name: echo matrix
+        run: |
+          echo ${{ matrix }}
+          echo " ================ "
+          echo ${{ matrix.project }}
+          echo ${{ matrix.config }}
+          
+  job3:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - project: foo
+            config: Debug
+          - project: bar
+            config: Release
+    steps:
+      - name: echo matrix
+        run: |
+          echo ${{ matrix }}
+          echo " ================ "
+          echo ${{ matrix.project }}
+          echo ${{ matrix.config }}
