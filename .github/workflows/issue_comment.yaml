@@ -10,6 +10,7 @@ jobs:
     steps:
       - run: |
           echo A comment on PR $NUMBER
+          echo "${{ toJson(github.event) }}"
         env:
           NUMBER: ${{ github.event.issue.number }}
 
@@ -21,5 +22,6 @@ jobs:
     steps:
       - run: |
           echo A comment on issue $NUMBER
+          echo "${{ toJson(github.event) }}"
         env:
           NUMBER: ${{ github.event.issue.number }}
