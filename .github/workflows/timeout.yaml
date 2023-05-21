@@ -16,7 +16,7 @@ jobs:
         run: |
           sleep 300
           echo "Sleep 300 Done"
-      - name: execute
+      - name: execute sleep 5 minutes
         if: always()
         run: |
-          echo "execute"
+          sleep 300
