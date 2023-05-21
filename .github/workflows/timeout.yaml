@@ -5,14 +5,18 @@ on:
 jobs:
   timeout:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 3
     steps:
+      - name: sleep 1 minutes
+        run: |
+          sleep 60
+          echo "Sleep 1 minutes Done"
+        timeout-minutes: 2
       - name: sleep 5 minutes
         run: |
           sleep 300
           echo "Sleep 300 Done"
-        timeout-minutes: 2
-      - name: sleep 3 minutes
+      - name: execute
+        if: always()
         run: |
-          sleep 300
-          echo "Sleep 300 Done"
+          echo "execute"
