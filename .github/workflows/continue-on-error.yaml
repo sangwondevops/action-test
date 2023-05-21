@@ -1,0 +1,44 @@
+name: continue-on-error
+
+on:
+  workflow_dispatch:
+
+jobs:
+  continue-on-error-job:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Step 1 
+      run: exit 1
+      continue-on-error: true
+    - name: Step 2
+      run: echo "hello world"
+    - name: Step 3
+      run: |
+        echo "hello world"
+
+  next-job: 
+    needs: [continue-on-error-job]
+    steps:
+    - name: echo "hello"
+      run: |
+        echo "hello"
+
+  always-job:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Step 1
+      run: exit 1
+    - name: Step 2
+      if: always()
+      run: |
+        echo "hello world"
+    - name: Step 3
+      run: |
+        echo "hello world"
+
+  next-job-2: 
+    needs: [always-job]
+    steps:
+    - name: echo "hello"
+      run: |
+        echo "hello"
