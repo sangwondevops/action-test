@@ -134,7 +134,7 @@ jobs:
         title: "Pull Request from Develop"
         commit-message: "Create PR develop -> production"
         committer: GitHub <noreply@github.com>
-        branch: create-pr-${{ github.run_id }}
+        branch-suffix: random
         base: production
 
   slack:
