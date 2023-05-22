@@ -1,4 +1,7 @@
 name: cicd-2 # Deploy develop, production
+permissions:
+  pull-requests: write
+  contents: write
 on:
   push:
     branches: [develop, production]
@@ -124,18 +127,20 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ set-environment, deploy ]
     if: |
-      needs.set-environment.outputs.set-env == "develop"
+      needs.set-environment.outputs.set-env == 'develop'
     steps:
     - uses: actions/checkout@v3
+    - name: gh auth login
+      run: |
+        echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
+    - name: create branch
+      run: |
+        git checkout -b create-pr-${{ github.run_id }}
+        git push origin create-pr-${{ github.run_id }}
     - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v5
-      with:
-        token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        commit-message: "Create PR develop -> production"
-        committer: GitHub <noreply@github.com>
-        branch: production
-        base: develop
-
+      run: |
+        gh pr create --base production --title "Create PR Develop -> Production" --body "Create PR Develop -> Production" --head create-pr-${{ github.run_id }}
+   
   slack:
     runs-on: ubuntu-latest
     needs: [deploy]
