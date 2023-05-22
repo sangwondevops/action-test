@@ -135,6 +135,9 @@ jobs:
         echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
     - name: Create Pull Request
       run: |
+        git branch
+        echo "========"
+        git checkout develop
         git checkout -b create-pr-${{ github.run_id }}
         git add .
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
