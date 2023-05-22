@@ -1,4 +1,4 @@
-name: cicd-22 # Deploy develop, production
+name: cicd-2 # Deploy develop, production
 permissions:
   pull-requests: write
   contents: write
