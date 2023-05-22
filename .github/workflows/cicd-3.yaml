@@ -166,7 +166,7 @@ jobs:
         if [[ $branch == release/${{ steps.filter.outputs.filter-tag }} ]]; then
           echo "is_branch=true" >> $GITHUB_OUTPUT
         fi
-    - name: check output
+    - name: check output 1
       run: |
         echo ${{ steps.var.outputs.is_branch }}
         echo ${{ steps.filter.outputs.filter-tag }}
