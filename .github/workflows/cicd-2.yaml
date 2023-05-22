@@ -1,7 +1,7 @@
 name: cicd-22 # Deploy develop, production
-permissions:
-  pull-requests: write
-  contents: write
+# permissions:
+#   pull-requests: write
+#   contents: write
 on:
   push:
     branches: [develop, production]
@@ -140,8 +140,8 @@ jobs:
     - name: Use gh cli
       run: |
         gh pr create --base production --title "Create PR Develop -> Production" --body "Create PR Develop -> Production" --head create-pr-${{ github.run_id }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      # env:
+      #   GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
   slack:
     runs-on: ubuntu-latest
