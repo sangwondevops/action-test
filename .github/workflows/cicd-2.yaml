@@ -138,6 +138,7 @@ jobs:
         # commit-message: "Create PR develop -> production"
         # committer: GitHub <noreply@github.com>
         # branch-suffix: random
+        branch: develop
         base: production
 
   slack:
