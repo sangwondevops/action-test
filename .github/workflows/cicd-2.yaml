@@ -1,4 +1,7 @@
 name: cicd-2 # Deploy develop, production
+permissions:
+  pull-requests: write
+  contents: write
 on:
   push:
     branches: [develop, production]
@@ -130,11 +133,11 @@ jobs:
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v5
       with:
-        token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        title: "Pull Request from Develop"
-        commit-message: "Create PR develop -> production"
-        committer: GitHub <noreply@github.com>
-        branch-suffix: random
+        token: ${{ secrets.GITHUB_TOKEN }}
+        # title: "Pull Request from Develop"
+        # commit-message: "Create PR develop -> production"
+        # committer: GitHub <noreply@github.com>
+        # branch-suffix: random
         base: production
 
   slack:
