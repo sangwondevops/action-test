@@ -1,4 +1,4 @@
-name: cicd-1
+name: cicd-1 # Deploy develop only
 permissions:
   id-token: write
   contents: write
