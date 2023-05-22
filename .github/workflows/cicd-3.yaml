@@ -164,13 +164,13 @@ jobs:
         echo ${{ steps.var.outputs.is_branch }}
     - name: create branch
       if: |
-        steps.var.is_branch == 'false'
+        steps.var.outputs.is_branch == 'false'
       run: |
         git checkout -b release/${{ needs.set-environment.outputs.set-tag }}
         git push origin release/${{ needs.set-environment.outputs.set-tag }}
     - name: update branch
       if: |
-        steps.var.is_branch == 'true'
+        steps.var.outputs.is_branch == 'true'
       run: |
         git checkout -b release/${{ needs.set-environment.outputs.set-tag }}
         git push -f origin release/${{ needs.set-environment.outputs.set-tag }}
