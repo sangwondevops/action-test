@@ -124,7 +124,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ set-environment, deploy ]
     if: |
-      needs.set-environment.outputs.set-env == "develop"
+      needs.set-environment.outputs.set-env == 'develop'
     steps:
     - uses: actions/checkout@v3
     - name: Create Pull Request
