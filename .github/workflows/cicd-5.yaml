@@ -116,7 +116,7 @@ jobs:
         repository: "sangwondevops/action-module"
         path: ./action-module
     - name: create-pr
-      uses: ./action-module/create-pr
+      uses: ./action-module/common/create-pr
       with:
         GITHUB_PAT: ${{ secrets.GITHUB_PAT }} 
         TAG: ${{ needs.set-environment.outputs.set-tag }}
