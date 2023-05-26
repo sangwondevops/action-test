@@ -1,4 +1,4 @@
-name: cicd-3 # Deploy develop, QA, production
+name: cicd-3 # Deploy develop, QA, staging, production
 permissions:
   pull-requests: write
   contents: write
