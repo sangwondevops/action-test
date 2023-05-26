@@ -35,7 +35,6 @@ jobs:
             if [[ ${{ github.ref_name }} == "develop" ]]; then
               echo "set-env=develop" >> "$GITHUB_OUTPUT"
               exit 0
-            fi
             elif [[ ${{ github.ref_name }} == "production" ]]; then
               echo "set-env=production" >> "$GITHUB_OUTPUT"
               exit 0
