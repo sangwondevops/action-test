@@ -25,11 +25,10 @@ jobs:
         with:
           repository: "sangwondevops/action-module"
           path: ./action-module
-          ref: master
       - name: check file list
         run: |
           ls action-module
-      - uses: ./action-module/set-env
+      - uses: ./action-module/common/set-env
         id: var
         with:
           ref_type: ${{ github.ref_type }}
