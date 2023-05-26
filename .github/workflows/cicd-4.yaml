@@ -1,0 +1,251 @@
+name: cicd-3 # Deploy develop, QA, production
+permissions:
+  pull-requests: write
+  contents: write
+on:
+  push:
+    branches: [develop, production]
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: [develop, production]
+    tags-ignore:
+      - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+
+jobs:
+  set-environment:
+    runs-on: ubuntu-latest
+    outputs:
+      set-env: ${{ steps.var.outputs.set-env }}
+      set-tag: ${{ steps.var.outputs.set-tag }}
+    steps:
+      - name: checkout the code
+        uses: actions/checkout@v3
+      - name: set env
+        id: var
+        run: |
+          if [[ ${{ github.ref_type }} == "tag" ]]; then
+            echo "set-env=qa" >> "$GITHUB_OUTPUT"
+            echo "set-tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ ${{ github.ref_type }} == "branch" ]]; then
+            if [[ ${{ github.ref_name }} == "develop" ]]; then
+              echo "set-env=develop" >> "$GITHUB_OUTPUT"
+              exit 0
+            elif [[ ${{ github.ref_name }} == "production" ]]; then
+              echo "set-env=staging" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+      - name: check output
+        run: |
+          echo ${{ steps.var.outputs.set-env }}
+          echo ${{ steps.var.outputs.set-tag }}
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout the code
+        uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      # - name: Cache Node.js modules
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ~/.npm
+      #     key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-node-
+      # - name: Install dependencies
+      #   run: |
+      #     cd my-app
+      #     npm ci
+      # - name: Test
+      #   run: |
+      #     cd my-app
+      #     npm test
+
+  build-image:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: ["${{ needs.set-environment.outputs.set-env }}"]
+    environment: ${{ matrix.environment }}
+    needs: [ set-environment, test ]
+    if: |
+      (github.event_name == 'push')
+    steps:
+      - name: checkout the code
+        uses: actions/checkout@v3
+      # - name: fetch actions repo
+      #   uses: actions/checkout@v3
+      #   with:
+      #     repository: "devopssangwon/action-module"
+      #     path: "./action-module"
+      #     ref: master
+      # - name: aws credentials
+      #   uses: "./action-module/credentials/aws"
+      #   with:
+      #     role-arn: ${{ secrets.AWS_ROLE_ARN }}
+      # - name: Login to Amazon ECR
+      #   id: login-ecr
+      #   uses: aws-actions/amazon-ecr-login@v1
+      # - name: docker test
+      #   run: |
+      #     docker build -f ${GITHUB_WORKSPACE}/Dockerfile . \
+      #     --tag ${{ env.registry }}/${{ env.repository }}:latest \
+      #     --tag ${{ env.registry }}/${{ env.repository }}:${{ github.sha }}
+      #     docker push ${{ env.registry }}/${{ env.repository }}:latest
+      #     docker push ${{ env.registry }}/${{ env.repository }}:${{ github.sha }}
+      #   env:
+      #     repository: ${{ secrets.ECR_REPOSITORY }}
+      #     registry: ${{ secrets.ECR_REGISTRY }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [ set-environment, build-image ]
+    strategy:
+      matrix:
+        environment: ["${{ needs.set-environment.outputs.set-env }}"]
+    environment: ${{ matrix.environment }}
+    steps:
+    - uses: actions/checkout@v3
+    # - name: fetch actions repo
+    #   uses: actions/checkout@v3
+    #   with:
+    #     repository: "devopssangwon/action-module"
+    #     path: "./action-module"
+    #     ref: master
+    # - name: aws credentials
+    #   uses: "./action-module/credentials/aws"
+    #   with:
+    #     role-arn: ${{ secrets.AWS_ROLE_ARN }}
+    # - uses: azure/setup-kubectl@v1
+    #   with:
+    #     version: v1.23.0
+    # - uses: azure/setup-helm@v1
+    #   with:
+    #     version: v3.7.2 
+    # - name: get k8s  kube-config
+    #   run: |
+    #     aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER }}
+    # - name: deploy kubernetes manifest
+    #   run: |
+    #     helm upgrade --install test helm-chart/chart --namespace test-${{ matrix.environment }} --wait --atomic \
+    #     --timeout 15m \
+    #     --values helm-chart/values/${{ matrix.environment }}/values.yaml \
+    #     --set image.tag=${{ github.sha }}
+  
+  create-pr:
+    runs-on: ubuntu-latest
+    needs: [ set-environment, deploy ]
+    if: |
+      needs.set-environment.outputs.set-env == 'qa'
+    steps:
+    - uses: actions/checkout@v3
+    - name: gh auth login
+      run: |
+        echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
+    - name: tag filter
+      id: filter
+      run: |
+        tag=${{ needs.set-environment.outputs.set-tag }}
+        tag=${tag%-*}
+        echo $tag
+        echo "filter-tag=$tag" >> $GITHUB_OUTPUT
+    - name: check release branch exist
+      id: var
+      run: |
+        branch=$(gh pr list -s open -H release/${{ steps.filter.outputs.filter-tag }} --json headRefName | jq '.[] | .headRefName')
+        echo "branch: ${branch}"
+        echo "is_branch=false" >> $GITHUB_OUTPUT
+        if [[ ${branch} == *"release/${{ steps.filter.outputs.filter-tag }}"* ]]; then
+          echo "is_branch=true" >> $GITHUB_OUTPUT
+        fi
+    - name: check output 1
+      run: |
+        echo ${{ steps.var.outputs.is_branch }}
+        echo ${{ steps.filter.outputs.filter-tag }}
+    - name: create branch
+      if: |
+        steps.var.outputs.is_branch == 'false'
+      run: |
+        git checkout -b release/${{ steps.filter.outputs.filter-tag }}
+        git push origin release/${{ steps.filter.outputs.filter-tag }}
+    - name: Create Pull Request
+      if: |
+        steps.var.outputs.is_branch == 'false'
+      run: |
+        gh pr create --base production --title "Create PR Release -> Production" --body "Create PR Release -> Production" --head release/${{ steps.filter.outputs.filter-tag }}
+    - name: update branch
+      if: |
+        steps.var.outputs.is_branch == 'true'
+      run: |
+        git checkout -b release/${{ steps.filter.outputs.filter-tag }}
+        git push -f origin release/${{ steps.filter.outputs.filter-tag }}
+  
+  slack:
+    runs-on: ubuntu-latest
+    needs: [set-environment, deploy]
+    steps:
+    - uses: actions/checkout@v3
+    - name: echo env
+      run: |
+        echo ${{ needs.set-environment.outputs.set-env }}
+    - name: Send PR URL
+      if: |
+        needs.set-environment.outputs.set-env == 'staging'
+      run: |
+        echo "Staging deploy done."
+
+  approve:
+    runs-on: ubuntu-latest
+    environment: approve
+    needs: [ set-environment, deploy ]
+    if: |
+      needs.set-environment.outputs.set-env == 'staging'
+    steps:
+      - uses: actions/checkout@v3
+      - name: approve
+        run: |
+          echo "Approve Done. Start Prod deploy"
+          
+  prod-deploy:
+    runs-on: ubuntu-latest
+    needs: [ approve ]
+    strategy:
+      matrix:
+        environment: ["production"]
+    environment: ${{ matrix.environment }}
+    steps:
+    - uses: actions/checkout@v3
+    # - name: fetch actions repo
+    #   uses: actions/checkout@v3
+    #   with:
+    #     repository: "devopssangwon/action-module"
+    #     path: "./action-module"
+    #     ref: master
+    # - name: aws credentials
+    #   uses: "./action-module/credentials/aws"
+    #   with:
+    #     role-arn: ${{ secrets.AWS_ROLE_ARN }}
+    # - uses: azure/setup-kubectl@v1
+    #   with:
+    #     version: v1.23.0
+    # - uses: azure/setup-helm@v1
+    #   with:
+    #     version: v3.7.2 
+    # - name: get k8s  kube-config
+    #   run: |
+    #     aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER }}
+    # - name: deploy kubernetes manifest
+    #   run: |
+    #     helm upgrade --install test helm-chart/chart --namespace test-${{ matrix.environment }} --wait --atomic \
+    #     --timeout 15m \
+    #     --values helm-chart/values/${{ matrix.environment }}/values.yaml \
+    #     --set image.tag=${{ github.sha }}
+  
+  
