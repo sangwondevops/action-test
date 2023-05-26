@@ -25,6 +25,7 @@ jobs:
         with:
           repository: "sangwondevops/action-module"
           path: ./action-module
+          ref: master
       - name: check file list
         run: |
           ls action-module
