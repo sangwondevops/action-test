@@ -29,7 +29,7 @@ jobs:
       - name: check file list
         run: |
           ls action-module
-      - uses: action-module/set-env
+      - uses: ./action-module/set-env
         id: var
         with:
           ref_type: ${{ github.ref_type }}
