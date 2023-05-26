@@ -163,8 +163,8 @@ jobs:
         branch=$(gh pr list -s open -H release/${{ steps.filter.outputs.filter-tag }} --json headRefName | jq '.[] | .headRefName')
         echo "branch: ${branch}"
         echo "is_branch=false" >> $GITHUB_OUTPUT
-        filter-tag=${{ steps.filter.outputs.filter-tag }}
-        if [[ ${branch} == "release/${filter-tag}" ]]; then
+        tag=${{ steps.filter.outputs.filter-tag }}
+        if [[ ${branch} == "release/${tag}" ]]; then
           echo "is_branch=true" >> $GITHUB_OUTPUT
         fi
     - name: check output 1
