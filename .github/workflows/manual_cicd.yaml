@@ -76,8 +76,6 @@ jobs:
         environment: ["${{ needs.set-environment.outputs.set-env }}"]
     environment: ${{ matrix.environment }}
     needs: [ set-environment, test ]
-    if: |
-      (github.event_name == 'push')
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
