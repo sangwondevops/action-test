@@ -58,7 +58,7 @@ jobs:
           ref: ${{ inputs.set_branch }}
       - name: fetch actions repo
         if: |
-          inputs.skip_test == 'enabled'
+          inputs.skip_test == 'disabled'
         uses: actions/checkout@v3
         with:
           repository: "sangwondevops/action-module"
@@ -66,7 +66,7 @@ jobs:
           ref: ${{ vars.ref }}
       - uses: ./action-module/common/cache
         if: |
-          inputs.skip_test == 'enabled'
+          inputs.skip_test == 'disabled'
         with:
           NODE_VERSION: '18'
           WORKING_DIRECTORY: 'my-app'
