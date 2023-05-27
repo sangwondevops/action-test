@@ -51,20 +51,22 @@ jobs:
           
   test:
     runs-on: ubuntu-latest
-    if: |
-      ${{ inputs.skip_test }} == "enabled"
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
         with:
           ref: ${{ inputs.set_branch }}
       - name: fetch actions repo
+        if: |
+          inputs.skip_test == "enabled"
         uses: actions/checkout@v3
         with:
           repository: "sangwondevops/action-module"
           path: ./action-module
           ref: ${{ vars.ref }}
       - uses: ./action-module/common/cache
+        if: |
+          inputs.skip_test == "enabled"
         with:
           NODE_VERSION: '18'
           WORKING_DIRECTORY: 'my-app'
