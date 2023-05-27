@@ -35,16 +35,16 @@ jobs:
   set-environment:
     runs-on: ubuntu-latest
     outputs:
-      set-env: ${{ inputs.environment }}
+      set-env: ${{ steps.var.outputs.set-env }}
     steps:
       - name: checkout
         uses: actions/checkout@v3
-      - name: check input
+      - name: set output
+        id: var
         run: |
-          echo ${{ inputs.environment }}
+          echo "set-env=${{ inputs.environment }}" >> $GITHUB_OUTPUT
           echo ${{ inputs.skip_test }}
           echo ${{ inputs.set_branch }}
-          
           
   test:
     runs-on: ubuntu-latest
@@ -58,12 +58,14 @@ jobs:
         run: |
           exit 0
       - name: fetch actions repo
+        if: ${{ inputs.skip_test }} == "enabled"
         uses: actions/checkout@v3
         with:
           repository: "sangwondevops/action-module"
           path: ./action-module
           ref: ${{ vars.ref }}
       - uses: ./action-module/common/cache
+        if: ${{ inputs.skip_test }} == "enabled"
         with:
           NODE_VERSION: '18'
           WORKING_DIRECTORY: 'my-app'
