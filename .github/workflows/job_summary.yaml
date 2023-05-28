@@ -23,8 +23,8 @@ jobs:
             echo "### :rocket: Workflow inputs"
             echo "| Arg                 | Value |"
             echo "| ------------------- | ----- |"
-            echo "| Print inputs        | ${{ inputs.print-inputs }} |"
             echo "| Environment         | ${{ inputs.environment }} |"
-            echo "| Cluster             | ${{ inputs.cluster }} |"
+            echo "| Skip Test           | ${{ inputs.skip_test }} |"
+            echo "| Set Branch          | ${{ inputs.set_branch }} |"
           } >> $GITHUB_STEP_SUMMARY
 
