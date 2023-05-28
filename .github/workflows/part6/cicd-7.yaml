@@ -1,4 +1,4 @@
-name: manual cicd
+name: manual + job summary cicd
 permissions:
   pull-requests: write
   contents: write

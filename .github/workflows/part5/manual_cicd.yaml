@@ -1,0 +1,188 @@
+name: manual cicd
+permissions:
+  pull-requests: write
+  contents: write
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'set environment'
+        required: true
+        default: 'develop'
+        type: choice
+        options:
+          - develop
+          - qa
+          - staging
+      skip_test:
+        description: 'set skip option'
+        required: true
+        default: 'enabled'
+        type: choice
+        options:
+        - enabled
+        - disabled
+      set_branch:
+        description: 'set branch'
+        required: true
+        default: 'develop'
+        type: choice
+        options:
+          - develop
+          - production
+
+jobs:
+  set-environment:
+    runs-on: ubuntu-latest
+    outputs:
+      set-env: ${{ steps.var.outputs.set-env }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: set output
+        id: var
+        run: |
+          echo "set-env=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+          echo ${{ inputs.skip_test }}
+          echo ${{ inputs.set_branch }}
+      - name: steps output
+        run: |
+          echo ${{ steps.var.outputs.set-env }}
+ 
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout the code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.set_branch }}
+      - name: fetch actions repo
+        if: |
+          inputs.skip_test == 'disabled'
+        uses: actions/checkout@v3
+        with:
+          repository: "sangwondevops/action-module"
+          path: ./action-module
+          ref: ${{ vars.ref }}
+      - uses: ./action-module/common/cache
+        if: |
+          inputs.skip_test == 'disabled'
+        with:
+          NODE_VERSION: '18'
+          WORKING_DIRECTORY: 'my-app'
+
+  build-image:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: ["${{ needs.set-environment.outputs.set-env }}"]
+    environment: ${{ matrix.environment }}
+    needs: [ set-environment, test ]
+    steps:
+      - name: checkout the code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.set_branch }}
+      - name: fetch actions repo
+        uses: actions/checkout@v3
+        with:
+          repository: "sangwondevops/action-module"
+          path: ./action-module
+          ref: ${{ vars.ref }}
+      # - name: aws credentials
+      #   uses: ./action-module/aws/credentials
+      #   with:
+      #     AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      # - name: Access ECR
+      #   uses: ./action-module/docker/image
+      #   with:
+      #     REGISTRY: ${{ secrets.REGISTRY }} 
+      #     REPOSITORY: ${{ secrets.REPOSITORY }} 
+                 
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [ set-environment, build-image ]
+    strategy:
+      matrix:
+        environment: ["${{ needs.set-environment.outputs.set-env }}"]
+    environment: ${{ matrix.environment }}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ inputs.set_branch }}
+    - name: fetch actions repo
+      uses: actions/checkout@v3
+      with:
+        repository: "sangwondevops/action-module"
+        path: ./action-module
+        ref: ${{ vars.ref }}
+    # - name: aws credentials
+    #   uses: ./action-module/aws/credentials
+    #   with:
+    #     role-arn: ${{ secrets.AWS_ROLE_ARN }}
+    # - name: deploy kubernetes
+    #   uses: ./action-module/deploy/kubernetes
+    #   with:
+    #     EKS_CLUSTER: ${{ secrets.EKS_CLUSTER }} 
+    #     RELEASE_NAME: example-a
+    #     HELM_CHART_PATH: helm-chart
+    #     NAMESPACE: ${{ secrets.NAMESPACE }}-${{ matrix.environment }}
+    #     VALUES_PATH: ${{ secrets.VALUES_PATH }}
+  
+  slack:
+    runs-on: ubuntu-latest
+    needs: [set-environment, deploy]
+    steps:
+    - uses: actions/checkout@v3
+    - name: echo env
+      run: |
+        echo ${{ needs.set-environment.outputs.set-env }}
+    - name: Send PR URL
+      if: |
+        needs.set-environment.outputs.set-env == 'staging'
+      run: |
+        echo "Staging deploy done."
+
+  approve:
+    runs-on: ubuntu-latest
+    environment: approve
+    needs: [ set-environment, deploy, slack ]
+    if: |
+      needs.set-environment.outputs.set-env == 'staging'
+    steps:
+      - uses: actions/checkout@v3
+      - name: approve
+        run: |
+          echo "Approve Done. Start Prod deploy"
+
+  prod-deploy:
+    runs-on: ubuntu-latest
+    needs: [ approve ]
+    strategy:
+      matrix:
+        environment: ["production"]
+    environment: ${{ matrix.environment }}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ inputs.set_branch }}
+    - name: fetch actions repo
+      uses: actions/checkout@v3
+      with:
+        repository: "sangwondevops/action-module"
+        path: ./action-module
+        ref: ${{ vars.ref }}
+    # - name: aws credentials
+    #   uses: ./action-module/aws/credentials
+    #   with:
+    #     role-arn: ${{ secrets.AWS_ROLE_ARN }}
+    # - name: deploy kubernetes
+    #   uses: ./action-module/deploy/kubernetes
+    #   with:
+    #     EKS_CLUSTER: ${{ secrets.EKS_CLUSTER }} 
+    #     RELEASE_NAME: example-a
+    #     HELM_CHART_PATH: helm-chart
+    #     NAMESPACE: ${{ secrets.NAMESPACE }}-prod
+    #     VALUES_PATH: ${{ secrets.VALUES_PATH }}
+  
+  
