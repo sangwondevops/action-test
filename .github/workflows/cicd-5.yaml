@@ -131,11 +131,23 @@ jobs:
       with:
         repository: "sangwondevops/action-module"
         path: ./action-module
-    - name: notify
+    - name: notify (staging)
+      if: |
+        needs.set-environment.outputs.set-env == 'staging'
+      uses: ./action-module/common/slack/approve
+      with:
+        DEPLOY_JOB_STATUS: ${{ needs.deploy.result }}
+        ENVIRONMENT: ${{ needs.set-environment.outputs.set-env }}
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    - name: notify (dev,qa)
+      if: |
+        needs.set-environment.outputs.set-env != 'staging'
       uses: ./action-module/common/slack
       with:
         DEPLOY_JOB_STATUS: ${{ needs.deploy.result }}
         ENVIRONMENT: ${{ needs.set-environment.outputs.set-env }}
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    
 
   approve:
     runs-on: ubuntu-latest
@@ -175,5 +187,18 @@ jobs:
     #     HELM_CHART_PATH: helm-chart
     #     NAMESPACE: ${{ secrets.NAMESPACE }}-prod
     #     VALUES_PATH: ${{ secrets.VALUES_PATH }}
-  
+    - name: notify(success)
+      if: success()
+      uses: ./action-module/common/slack
+      with:
+        DEPLOY_JOB_STATUS: success
+        ENVIRONMENT: production
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    - name: notify(failure)
+      if: failure()
+      uses: ./action-module/common/slack
+      with:
+        DEPLOY_JOB_STATUS: failure
+        ENVIRONMENT: production
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
   

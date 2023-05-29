@@ -196,7 +196,7 @@ jobs:
     - name: notify
       uses: slackapi/slack-github-action@v1.24.0
       if: |
-        needs.set-environment.outputs.set-env == 'staging' && needs.deploy.result == 'success'
+        needs.set-environment.outputs.set-env == 'staging'
       with:
         payload: |
           {
