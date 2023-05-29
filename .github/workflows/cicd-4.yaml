@@ -113,6 +113,9 @@ jobs:
     environment: ${{ matrix.environment }}
     steps:
     - uses: actions/checkout@v3
+    - name: force fail
+      run: |
+        exit 1
     # - name: fetch actions repo
     #   uses: actions/checkout@v3
     #   with:
