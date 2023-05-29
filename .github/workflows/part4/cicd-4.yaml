@@ -113,9 +113,6 @@ jobs:
     environment: ${{ matrix.environment }}
     steps:
     - uses: actions/checkout@v3
-    - name: force fail
-      run: |
-        exit 1
     # - name: fetch actions repo
     #   uses: actions/checkout@v3
     #   with:
@@ -198,7 +195,8 @@ jobs:
     steps:
     - name: notify
       uses: slackapi/slack-github-action@v1.24.0
-      if: needs.set-environment.outputs.set-env == 'staging'
+      if: |
+        needs.set-environment.outputs.set-env == 'staging'
       with:
         payload: |
           {
