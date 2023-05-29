@@ -20,8 +20,6 @@ jobs:
       set-env: ${{ steps.var.outputs.set-env }}
       set-tag: ${{ steps.var.outputs.set-tag }}
     steps:
-      - name: checkout the code
-        uses: actions/checkout@v3
       - name: set env
         id: var
         run: |
@@ -49,9 +47,10 @@ jobs:
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
+      # - name: setup-node
+      # - uses: actions/setup-node@v3
+      #   with:
+      #     node-version: 18
       # - name: Cache Node.js modules
       #   uses: actions/cache@v3
       #   with:
@@ -112,7 +111,8 @@ jobs:
         environment: ["${{ needs.set-environment.outputs.set-env }}"]
     environment: ${{ matrix.environment }}
     steps:
-    - uses: actions/checkout@v3
+    - name: checkout the code
+      uses: actions/checkout@v3
     # - name: fetch actions repo
     #   uses: actions/checkout@v3
     #   with:
@@ -123,10 +123,12 @@ jobs:
     #   uses: "./action-module/credentials/aws"
     #   with:
     #     role-arn: ${{ secrets.AWS_ROLE_ARN }}
-    # - uses: azure/setup-kubectl@v1
+    # - name: setup-kubectl
+    #   uses: azure/setup-kubectl@v1
     #   with:
     #     version: v1.23.0
-    # - uses: azure/setup-helm@v1
+    # - name: setup-helm
+    #   uses: azure/setup-helm@v1
     #   with:
     #     version: v3.7.2 
     # - name: get k8s  kube-config
@@ -145,7 +147,8 @@ jobs:
     if: |
       needs.set-environment.outputs.set-env == 'qa'
     steps:
-    - uses: actions/checkout@v3
+    - name: checkout the code
+      uses: actions/checkout@v3
     - name: gh auth login
       run: |
         echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token

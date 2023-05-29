@@ -15,8 +15,6 @@ jobs:
     outputs:
       set-env: ${{ steps.var.outputs.set-env }}
     steps:
-      - name: checkout the code
-        uses: actions/checkout@v3
       - name: set env
         id: var
         run: |
@@ -33,9 +31,10 @@ jobs:
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
+      # - name: setup-node
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: 18
       # - name: Cache Node.js modules
       #   uses: actions/cache@v3
       #   with:
@@ -99,13 +98,15 @@ jobs:
     #   with:
     #     aws-region: ${{ vars.AWS_REGION }}
     #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-    # - uses: azure/setup-kubectl@v3
+    # - name: setup kubectl
+    #   uses: azure/setup-kubectl@v3
     #   with:
     #     version: v1.23.0
-    # - uses: azure/setup-helm@v3
+    # - name: setup helm
+    #   uses: azure/setup-helm@v3
     #   with:
     #     version: v3.7.2 
-    # - name: get k8s  kube-config
+    # - name: get k8s kube-config
     #   run: |
     #     aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER }}
     # - name: deploy kubernetes manifest
@@ -121,7 +122,8 @@ jobs:
     if: |
       needs.set-environment.outputs.set-env == 'develop'
     steps:
-    - uses: actions/checkout@v3
+    - name: checkout the code
+      uses: actions/checkout@v3
     - name: gh auth login
       run: |
         echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
