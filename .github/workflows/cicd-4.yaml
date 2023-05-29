@@ -190,16 +190,28 @@ jobs:
   slack:
     runs-on: ubuntu-latest
     needs: [set-environment, deploy]
+    if: |
+      always() && (needs.deploy.result == 'success' || needs.deploy.result == 'failure')
     steps:
-    - uses: actions/checkout@v3
-    - name: echo env
-      run: |
-        echo ${{ needs.set-environment.outputs.set-env }}
-    - name: Send PR URL
-      if: |
-        needs.set-environment.outputs.set-env == 'staging'
-      run: |
-        echo "Staging deploy done."
+    - name: notify
+      uses: slackapi/slack-github-action@v1.24.0
+      with:
+        payload: |
+          {
+            "text": "GitHub Action result: ${{ needs.deploy.result }} in ${{ needs.set-environment.outputs.set-env }}.\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "GitHub Action result: ${{ needs.deploy.result }} in ${{ needs.set-environment.outputs.set-env }}.\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                }
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
   approve:
     runs-on: ubuntu-latest
@@ -247,5 +259,25 @@ jobs:
     #     --timeout 15m \
     #     --values helm-chart/values/${{ matrix.environment }}/values.yaml \
     #     --set image.tag=${{ github.sha }}
+    - name: notify
+      uses: slackapi/slack-github-action@v1.24.0
+      if: always()
+      with:
+        payload: |
+          {
+            "text": "GitHub Action result: ${{ needs.deploy.result }} in production.\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "GitHub Action result: ${{ needs.deploy.result }} in production.\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                }
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
   
   
