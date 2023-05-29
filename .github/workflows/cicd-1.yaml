@@ -152,11 +152,11 @@ jobs:
                         }
                     ],
                     "actions": [
-                      {
+                        {
                             "type": "button",
                             "text": "Details",
                             "url" : 'https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}'
-                      }
+                        }
                     ]
                 }
             ]
