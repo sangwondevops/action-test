@@ -117,14 +117,14 @@ jobs:
                             "title": "Fail to deploy",
                             "value": "${{ github.ref_name }}",
                             "short": true
-                        },
-                     "actions": [
-                        {
+                        }
+                    ],
+                    "actions": [
+                      {
                             "type": "button",
                             "text": "Details",
                             "url" : 'https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}'
-                        }
-                      ]
+                      }
                     ]
                 }
             ]
@@ -149,14 +149,14 @@ jobs:
                             "title": "Success to deploy",
                             "value": "${{ github.ref_name }}",
                             "short": true
-                        },
-                     "actions": [
-                        {
+                        }
+                    ],
+                    "actions": [
+                      {
                             "type": "button",
                             "text": "Details",
                             "url" : 'https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}'
-                        }
-                      ]
+                      }
                     ]
                 }
             ]
