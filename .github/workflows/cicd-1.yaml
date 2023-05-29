@@ -107,30 +107,19 @@ jobs:
       with:
         payload: |
           {
-            "attachments": [
-                {
-                    "fallback": " < Fail to deploy > ",
-                    "color": "#3AA3E3",
-                    "text": " < Fail to deploy > ",
-                    "fields": [
-                        {
-                            "title": "Fail to deploy",
-                            "value": "${{ github.ref_name }}",
-                            "short": true
-                        }
-                    ],
-                    "actions": [
-                      {
-                            "type": "button",
-                            "text": "Details",
-                            "url" : 'https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}'
-                      }
-                    ]
+            "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
                 }
+              }
             ]
           }
       env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} 
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
     - name: nofify-success
       if: |
@@ -139,26 +128,15 @@ jobs:
       with:
         payload: |
           {
-            "attachments": [
-                {
-                    "fallback": " < Success to deploy > ",
-                    "color": "#3AA3E3",
-                    "text": " < Success to deploy > ",
-                    "fields": [
-                        {
-                            "title": "Success to deploy",
-                            "value": "${{ github.ref_name }}",
-                            "short": true
-                        }
-                    ],
-                    "actions": [
-                        {
-                            "type": "button",
-                            "text": "Details",
-                            "url" : 'https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}'
-                        }
-                    ]
+            "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
                 }
+              }
             ]
           }
       env:
