@@ -126,15 +126,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: [set-environment, deploy]
     steps:
-    - uses: actions/checkout@v3
-    - name: echo env
-      run: |
-        echo ${{ needs.set-environment.outputs.set-env }}
-    - name: Send PR URL
-      if: |
-        needs.set-environment.outputs.set-env == 'staging'
-      run: |
-        echo "Staging deploy done."
+    - name: fetch actions repo
+      uses: actions/checkout@v3
+      with:
+        repository: "sangwondevops/action-module"
+        path: ./action-module
+    - name: notify
+      uses: ./action-module/common/slack
+      with:
+        DEPLOY_JOB_STATUS: ${{ needs.deploy.result }}
+        ENVIRONMENT: ${{ needs.set-environment.outputs.set-env }}
 
   approve:
     runs-on: ubuntu-latest
