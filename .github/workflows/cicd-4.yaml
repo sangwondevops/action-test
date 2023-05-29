@@ -207,13 +207,19 @@ jobs:
                   "type": "mrkdwn",
                   "text": "Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}."
                 }
-              }
-            ],
-            "actions": [
+              },
               {
-                "type": "button",
-                "text": "Approve PR for production deploy.",
-                "url" : "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                "type": "actions",
+                "elements": [
+                  {
+                  "type": "button",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "Approve for prod deploy"
+                  },
+                  "url" : "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  }
+                ]
               }
             ]
           }
