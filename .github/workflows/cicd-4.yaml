@@ -195,16 +195,44 @@ jobs:
     steps:
     - name: notify
       uses: slackapi/slack-github-action@v1.24.0
+      if: needs.set-environment.outputs.set-env == 'staging'
       with:
         payload: |
           {
-            "text": "GitHub Action result: ${{ needs.deploy.result }} in ${{ needs.set-environment.outputs.set-env }}.\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "text": "Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}.",
             "blocks": [
               {
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "GitHub Action result: ${{ needs.deploy.result }} in ${{ needs.set-environment.outputs.set-env }}.\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  "text": "Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}."
+                }
+              }
+            ],
+            "actions": [
+              {
+                "type": "button",
+                "text": "Approve PR for production deploy.",
+                "url" : "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+    - name: notify
+      uses: slackapi/slack-github-action@v1.24.0
+      if: needs.set-environment.outputs.set-env != 'staging'
+      with:
+        payload: |
+          {
+            "text": "Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}.",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}."
                 }
               }
             ]
@@ -265,13 +293,13 @@ jobs:
       with:
         payload: |
           {
-            "text": "GitHub Action result: ${{ needs.deploy.result }} in production.\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "text": "Deploy Result: ${{ needs.deploy.result }} in environment: production, repository: ${{ github.repository }}.",
             "blocks": [
               {
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "GitHub Action result: ${{ needs.deploy.result }} in production.\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  "text": "Deploy Result: ${{ needs.deploy.result }} in environment: production, repository: ${{ github.repository }}."
                 }
               }
             ]

@@ -108,13 +108,13 @@ jobs:
       with:
         payload: |
           {
-            "text": "GitHub Action result: ${{ needs.deploy.result }}\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "text": "Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}.",
             "blocks": [
               {
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "GitHub Action result: ${{ needs.deploy.result }}\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  "text": "Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}."
                 }
               }
             ]
