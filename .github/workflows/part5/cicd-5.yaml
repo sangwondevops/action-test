@@ -84,7 +84,8 @@ jobs:
         environment: ["${{ needs.set-environment.outputs.set-env }}"]
     environment: ${{ matrix.environment }}
     steps:
-    - uses: actions/checkout@v3
+    - name: checkout the code
+      uses: actions/checkout@v3
     - name: fetch actions repo
       uses: actions/checkout@v3
       with:
@@ -109,7 +110,8 @@ jobs:
     if: |
       needs.set-environment.outputs.set-env == 'qa'
     steps:
-    - uses: actions/checkout@v3
+    - name: checkout the code
+      uses: actions/checkout@v3
     - name: fetch actions repo
       uses: actions/checkout@v3
       with:
@@ -156,7 +158,6 @@ jobs:
     if: |
       needs.set-environment.outputs.set-env == 'staging'
     steps:
-      - uses: actions/checkout@v3
       - name: approve
         run: |
           echo "Approve Done. Start Prod deploy"
@@ -169,15 +170,16 @@ jobs:
         environment: ["production"]
     environment: ${{ matrix.environment }}
     steps:
-    - uses: actions/checkout@v3
+    - name: checkout the code
+      uses: actions/checkout@v3
     - name: fetch actions repo
       uses: actions/checkout@v3
       with:
         repository: "sangwondevops/action-module"
         path: ./action-module
-    - name: force exit
-      run: |
-        exit 1
+    # - name: force exit
+    #   run: |
+    #     exit 1
     # - name: aws credentials
     #   uses: ./action-module/aws/credentials
     #   with:

@@ -16,7 +16,8 @@ jobs:
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
-      # - uses: actions/setup-node@v3
+      # - name: setup-node
+      #   uses: actions/setup-node@v3
       #   with:
       #     node-version: 18
       # - name: Cache Node.js modules
@@ -82,10 +83,12 @@ jobs:
     #   with:
     #     aws-region: ${{ vars.AWS_REGION }}
     #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-    # - uses: azure/setup-kubectl@v3
+    # - name: setup kubectl
+    #   uses: azure/setup-kubectl@v3
     #   with:
     #     version: v1.23.0
-    # - uses: azure/setup-helm@v3
+    # - name: setup helm
+    #   uses: azure/setup-helm@v3
     #   with:
     #     version: v3.7.2
     # - name: get k8s  kube-config

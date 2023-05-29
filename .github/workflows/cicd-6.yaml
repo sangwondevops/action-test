@@ -1,82 +1,52 @@
-name: manual + job summary cicd
+name: versioning cicd 1
 permissions:
   pull-requests: write
   contents: write
 on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'set environment'
-        required: true
-        default: 'develop'
-        type: choice
-        options:
-          - develop
-          - qa
-          - staging
-      skip_test:
-        description: 'set skip option'
-        required: true
-        default: 'enabled'
-        type: choice
-        options:
-        - enabled
-        - disabled
-      set_branch:
-        description: 'set branch'
-        required: true
-        default: 'develop'
-        type: choice
-        options:
-          - develop
-          - production
+  push:
+    branches: [develop, production]
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: [develop, production]
+    # tags-ignore:
+    #   - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
 
 jobs:
   set-environment:
     runs-on: ubuntu-latest
     outputs:
       set-env: ${{ steps.var.outputs.set-env }}
+      set-tag: ${{ steps.var.outputs.set-tag }}
     steps:
-      - name: checkout
+      - name: fetch actions repo
         uses: actions/checkout@v3
-      - name: set output
+        with:
+          repository: "sangwondevops/action-module"
+          path: ./action-module
+          ref: ${{ vars.ref }}
+      - name: check file list
+        run: |
+          ls action-module
+      - uses: ./action-module/common/set-env
         id: var
-        run: |
-          echo "set-env=${{ inputs.environment }}" >> $GITHUB_OUTPUT
-          echo ${{ inputs.skip_test }}
-          echo ${{ inputs.set_branch }}
-      - name: steps output
-        run: |
-          echo ${{ steps.var.outputs.set-env }}
-      - name: Generate list using Markdown
-        run: |
-          {
-            echo "### :rocket: Workflow inputs"
-            echo "| Arg                 | Value |"
-            echo "| ------------------- | ----- |"
-            echo "| Environment         | ${{ inputs.environment }} |"
-            echo "| Skip Test           | ${{ inputs.skip_test }} |"
-            echo "| Set Branch          | ${{ inputs.set_branch }} |"
-          } >> $GITHUB_STEP_SUMMARY
-          
+        with:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+
   test:
     runs-on: ubuntu-latest
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
-        with:
-          ref: ${{ inputs.set_branch }}
       - name: fetch actions repo
-        if: |
-          inputs.skip_test == 'disabled'
         uses: actions/checkout@v3
         with:
           repository: "sangwondevops/action-module"
           path: ./action-module
           ref: ${{ vars.ref }}
       - uses: ./action-module/common/cache
-        if: |
-          inputs.skip_test == 'disabled'
         with:
           NODE_VERSION: '18'
           WORKING_DIRECTORY: 'my-app'
@@ -88,11 +58,11 @@ jobs:
         environment: ["${{ needs.set-environment.outputs.set-env }}"]
     environment: ${{ matrix.environment }}
     needs: [ set-environment, test ]
+    if: |
+      (github.event_name == 'push')
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
-        with:
-          ref: ${{ inputs.set_branch }}
       - name: fetch actions repo
         uses: actions/checkout@v3
         with:
@@ -117,9 +87,8 @@ jobs:
         environment: ["${{ needs.set-environment.outputs.set-env }}"]
     environment: ${{ matrix.environment }}
     steps:
-    - uses: actions/checkout@v3
-      with:
-        ref: ${{ inputs.set_branch }}
+    - name: checkout the code
+      uses: actions/checkout@v3
     - name: fetch actions repo
       uses: actions/checkout@v3
       with:
@@ -139,19 +108,53 @@ jobs:
     #     NAMESPACE: ${{ secrets.NAMESPACE }}-${{ matrix.environment }}
     #     VALUES_PATH: ${{ secrets.VALUES_PATH }}
   
+  create-pr:
+    runs-on: ubuntu-latest
+    needs: [ set-environment, deploy ]
+    if: |
+      needs.set-environment.outputs.set-env == 'qa'
+    steps:
+    - name: checkout the code
+      uses: actions/checkout@v3
+    - name: fetch actions repo
+      uses: actions/checkout@v3
+      with:
+        repository: "sangwondevops/action-module"
+        path: ./action-module
+        ref: ${{ vars.ref }}
+    - name: create-pr
+      uses: ./action-module/common/create-pr
+      with:
+        PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }} 
+        TAG: ${{ needs.set-environment.outputs.set-tag }}
+        BASE: production
+
   slack:
     runs-on: ubuntu-latest
     needs: [set-environment, deploy]
     steps:
-    - uses: actions/checkout@v3
-    - name: echo env
-      run: |
-        echo ${{ needs.set-environment.outputs.set-env }}
-    - name: Send PR URL
+    - name: fetch actions repo
+      uses: actions/checkout@v3
+      with:
+        repository: "sangwondevops/action-module"
+        path: ./action-module
+        ref: ${{ vars.ref }}
+    - name: notify (staging)
       if: |
         needs.set-environment.outputs.set-env == 'staging'
-      run: |
-        echo "Staging deploy done."
+      uses: ./action-module/common/slack/approve
+      with:
+        DEPLOY_JOB_STATUS: ${{ needs.deploy.result }}
+        ENVIRONMENT: ${{ needs.set-environment.outputs.set-env }}
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    - name: notify (dev,qa)
+      if: |
+        needs.set-environment.outputs.set-env != 'staging'
+      uses: ./action-module/common/slack
+      with:
+        DEPLOY_JOB_STATUS: ${{ needs.deploy.result }}
+        ENVIRONMENT: ${{ needs.set-environment.outputs.set-env }}
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   approve:
     runs-on: ubuntu-latest
@@ -160,7 +163,6 @@ jobs:
     if: |
       needs.set-environment.outputs.set-env == 'staging'
     steps:
-      - uses: actions/checkout@v3
       - name: approve
         run: |
           echo "Approve Done. Start Prod deploy"
@@ -173,9 +175,8 @@ jobs:
         environment: ["production"]
     environment: ${{ matrix.environment }}
     steps:
-    - uses: actions/checkout@v3
-      with:
-        ref: ${{ inputs.set_branch }}
+    - name: checkout the code
+      uses: actions/checkout@v3
     - name: fetch actions repo
       uses: actions/checkout@v3
       with:
@@ -194,5 +195,19 @@ jobs:
     #     HELM_CHART_PATH: helm-chart
     #     NAMESPACE: ${{ secrets.NAMESPACE }}-prod
     #     VALUES_PATH: ${{ secrets.VALUES_PATH }}
+    - name: notify(success)
+      if: success()
+      uses: ./action-module/common/slack
+      with:
+        DEPLOY_JOB_STATUS: success
+        ENVIRONMENT: production
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    - name: notify(failure)
+      if: failure()
+      uses: ./action-module/common/slack
+      with:
+        DEPLOY_JOB_STATUS: failure
+        ENVIRONMENT: production
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
   
   
