@@ -1,13 +1,13 @@
-name: pull_request
+name: filter
 
-on: pull_request
-
-# on:
-#   pull_request:
-#     branches: [ "temp" ]
+on:
+  push:
+    branches: [develop, production]
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
 
 jobs:
-  build:
+  filter:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

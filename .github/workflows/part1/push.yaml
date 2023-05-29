@@ -1,7 +1,9 @@
 name: push
-on:
-  push:
-    branches: [ "temp" ]
+on: push
+
+# on:
+#   push:
+#     branches: [ "temp" ]
 
 jobs:
   push:

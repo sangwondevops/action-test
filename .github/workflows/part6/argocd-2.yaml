@@ -1,0 +1,151 @@
+name: argocd-2
+permissions:
+  pull-requests: write
+  contents: write
+on:
+  push:
+    branches: [develop, production]
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: [develop, production]
+    tags-ignore:
+      - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+
+jobs:
+  set-environment:
+    runs-on: ubuntu-latest
+    outputs:
+      set-env: ${{ steps.var.outputs.set-env }}
+      set-tag: ${{ steps.var.outputs.set-tag }}
+    steps:
+      - name: fetch actions repo
+        uses: actions/checkout@v3
+        with:
+          repository: "sangwondevops/action-module"
+          path: ./action-module
+          ref: ${{ vars.ref }}
+      - name: check file list
+        run: |
+          ls action-module
+      - uses: ./action-module/common/set-env
+        id: var
+        with:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout the code
+        uses: actions/checkout@v3
+      - name: fetch actions repo
+        uses: actions/checkout@v3
+        with:
+          repository: "sangwondevops/action-module"
+          path: ./action-module
+          ref: ${{ vars.ref }}
+      - uses: ./action-module/common/cache
+        with:
+          NODE_VERSION: '18'
+          WORKING_DIRECTORY: 'my-app'
+
+  build-image:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: ["${{ needs.set-environment.outputs.set-env }}"]
+    environment: ${{ matrix.environment }}
+    needs: [ set-environment, test ]
+    if: |
+      (github.event_name == 'push')
+    steps:
+      - name: checkout the code
+        uses: actions/checkout@v3
+      - name: fetch actions repo
+        uses: actions/checkout@v3
+        with:
+          repository: "sangwondevops/action-module"
+          path: ./action-module
+          ref: ${{ vars.ref }}
+      # - name: aws credentials
+      #   uses: ./action-module/aws/credentials
+      #   with:
+      #     AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      # - name: Access ECR
+      #   uses: ./action-module/docker/image
+      #   with:
+      #     REGISTRY: ${{ secrets.REGISTRY }} 
+      #     REPOSITORY: ${{ secrets.REPOSITORY }} 
+                 
+  patch-image:
+    runs-on: ubuntu-latest
+    outputs:
+      APPROVE_PR_URL: ${{ steps.var.outputs.APPROVE_PR_URL }}
+    strategy:
+      matrix:
+        environment: ["${{ needs.set-environment.outputs.set-env }}"]
+    environment: ${{ matrix.environment }}
+    needs: [ set-environment, build-image ]
+    steps:
+      - name: checkout the code
+        uses: actions/checkout@v3
+      - name: fetch actions repo
+        uses: actions/checkout@v3
+        with:
+          repository: "sangwondevops/action-module"
+          path: ./action-module
+          ref: ${{ vars.ref }}
+      - name: image patch
+        id: var
+        uses: "./action-module/common/patch-image"
+        with:
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          GITHUB_SHA: ${{ github.sha }}
+          PROJECT: "example"
+          PROJECT_NAME: "example-a"
+          ENVIRONMENT: ${{ matrix.environment }}
+    
+  create-pr:
+    runs-on: ubuntu-latest
+    needs: [ set-environment, patch-image ]
+    if: |
+      needs.set-environment.outputs.set-env == 'qa'
+    steps:
+    - uses: actions/checkout@v3
+    - name: fetch actions repo
+      uses: actions/checkout@v3
+      with:
+        repository: "sangwondevops/action-module"
+        path: ./action-module
+        ref: ${{ vars.ref }}
+    - name: create-pr
+      uses: ./action-module/common/create-pr
+      with:
+        PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }} 
+        TAG: ${{ needs.set-environment.outputs.set-tag }}
+        BASE: production
+
+  slack:
+    runs-on: ubuntu-latest
+    needs: [set-environment, patch-image]
+    steps:
+    - uses: actions/checkout@v3
+    - name: fetch actions repo
+      uses: actions/checkout@v3
+      with:
+        repository: "sangwondevops/action-module"
+        path: ./action-module
+        ref: ${{ vars.ref }}
+    - name: echo env
+      run: |
+        echo ${{ needs.set-environment.outputs.set-env }}
+    - name: Send PR URL
+      if: |
+        needs.set-environment.outputs.set-env == 'staging'
+      uses: ./action-module/common/patch-image/slack
+      with:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        APPROVE_PR_URL: ${{ needs.patch-image.outputs.APPROVE_PR_URL }}
+

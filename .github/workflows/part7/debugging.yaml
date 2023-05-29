@@ -1,0 +1,21 @@
+name: debugging
+on:
+  workflow_dispatch:
+
+jobs:
+  debugging:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: create text file
+        run: |
+          echo "hello world" >> test.txt
+          echo "sangwon" >> test.txt
+      - name: exit 1
+        run: |
+          exit 1
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 15
