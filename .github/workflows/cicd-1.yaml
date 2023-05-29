@@ -73,6 +73,9 @@ jobs:
     environment: ${{ matrix.environment }}
     steps:
     - uses: actions/checkout@v3
+    - name: force fail
+      run: |
+        exit 1
     # - name: Configure AWS Credentials
     #   id: credentials
     #   uses: aws-actions/configure-aws-credentials@v2
@@ -100,13 +103,7 @@ jobs:
     needs: [deploy]
     if: always()
     steps:
-    - name: echo deploy status
-      run: |
-        echo ${{ needs.deploy.status.result }}
-        echo ${{ needs.deploy.result }}
-        echo ${{ needs.deploy }}
-        echo "${{ toJson(needs.deploy) }}"
-    - name: nofify-failure
+    - name: nofify
       uses: slackapi/slack-github-action@v1.24.0
       with:
         payload: |
@@ -125,24 +122,3 @@ jobs:
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-    # - name: nofify-success
-    #   if: |
-    #     needs.deploy.result == 'success'
-    #   uses: slackapi/slack-github-action@v1.24.0
-    #   with:
-    #     payload: |
-    #       {
-    #         "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
-    #         "blocks": [
-    #           {
-    #             "type": "section",
-    #             "text": {
-    #               "type": "mrkdwn",
-    #               "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
-    #             }
-    #           }
-    #         ]
-    #       }
-    #   env:
-    #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-    #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
