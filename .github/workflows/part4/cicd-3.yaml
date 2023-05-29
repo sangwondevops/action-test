@@ -198,13 +198,13 @@ jobs:
       with:
         payload: |
           {
-            "text": "GitHub Action result: ${{ needs.deploy.result }} in ${{ needs.set-environment.outputs.set-env }}.\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "text": "Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}.",
             "blocks": [
               {
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "GitHub Action result: ${{ needs.deploy.result }} in ${{ needs.set-environment.outputs.set-env }}.\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  "text": "Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}."
                 }
               }
             ]
