@@ -16,16 +16,16 @@ jobs:
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - name: Cache Node.js modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+      # - uses: actions/setup-node@v3
+      #   with:
+      #     node-version: 18
+      # - name: Cache Node.js modules
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ~/.npm
+      #     key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-node-
       # - name: Install dependencies
       #   run: |
       #     cd my-app
@@ -44,16 +44,12 @@ jobs:
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
-      - name: fetch actions repo
-        uses: actions/checkout@v3
-        with:
-          repository: "devopssangwon/action-module"
-          path: "./action-module"
-          ref: master
-      # - name: aws credentials
-      #   uses: "./action-module/credentials/aws"
+      # - name: Configure AWS Credentials
+      #   id: credentials
+      #   uses: aws-actions/configure-aws-credentials@v2
       #   with:
-      #     role-arn: ${{ secrets.AWS_ROLE_ARN }}
+      #     aws-region: ${{ vars.AWS_REGION }}
+      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
       # - name: Login to Amazon ECR
       #   id: login-ecr
       #   uses: aws-actions/amazon-ecr-login@v1
@@ -77,16 +73,12 @@ jobs:
     environment: ${{ matrix.environment }}
     steps:
     - uses: actions/checkout@v3
-    - name: fetch actions repo
-      uses: actions/checkout@v3
-      with:
-        repository: "devopssangwon/action-module"
-        path: "./action-module"
-        ref: master
-    # - name: aws credentials
-    #   uses: "./action-module/credentials/aws"
+    # - name: Configure AWS Credentials
+    #   id: credentials
+    #   uses: aws-actions/configure-aws-credentials@v2
     #   with:
-    #     role-arn: ${{ secrets.AWS_ROLE_ARN }}
+    #     aws-region: ${{ vars.AWS_REGION }}
+    #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
     # - uses: azure/setup-kubectl@v3
     #   with:
     #     version: v1.23.0
@@ -137,7 +129,7 @@ jobs:
             ]
           }
       env:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }} 
         SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
     - name: nofify-success
       if: success()
