@@ -103,18 +103,18 @@ jobs:
     needs: [deploy]
     if: always()
     steps:
-    - name: nofify
+    - name: notify
       uses: slackapi/slack-github-action@v1.24.0
       with:
         payload: |
           {
-            "text": "GitHub Action build result: ${{ needs.deploy.result }}\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "text": "GitHub Action result: ${{ needs.deploy.result }}\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
             "blocks": [
               {
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "GitHub Action build result: ${{ needs.deploy.result }}\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  "text": "GitHub Action result: ${{ needs.deploy.result }}\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
                 }
               }
             ]

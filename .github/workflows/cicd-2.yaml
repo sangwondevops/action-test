@@ -64,16 +64,12 @@ jobs:
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
-      # - name: fetch actions repo
-      #   uses: actions/checkout@v3
+      # - name: Configure AWS Credentials
+      #   id: credentials
+      #   uses: aws-actions/configure-aws-credentials@v2
       #   with:
-      #     repository: "devopssangwon/action-module"
-      #     path: "./action-module"
-      #     ref: master
-      # - name: aws credentials
-      #   uses: "./action-module/credentials/aws"
-      #   with:
-      #     role-arn: ${{ secrets.AWS_ROLE_ARN }}
+      #     aws-region: ${{ vars.AWS_REGION }}
+      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
       # - name: Login to Amazon ECR
       #   id: login-ecr
       #   uses: aws-actions/amazon-ecr-login@v1
@@ -97,20 +93,16 @@ jobs:
     environment: ${{ matrix.environment }}
     steps:
     - uses: actions/checkout@v3
-    # - name: fetch actions repo
-    #   uses: actions/checkout@v3
+    # - name: Configure AWS Credentials
+    #   id: credentials
+    #   uses: aws-actions/configure-aws-credentials@v2
     #   with:
-    #     repository: "devopssangwon/action-module"
-    #     path: "./action-module"
-    #     ref: master
-    # - name: aws credentials
-    #   uses: "./action-module/credentials/aws"
-    #   with:
-    #     role-arn: ${{ secrets.AWS_ROLE_ARN }}
-    # - uses: azure/setup-kubectl@v1
+    #     aws-region: ${{ vars.AWS_REGION }}
+    #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+    # - uses: azure/setup-kubectl@v3
     #   with:
     #     version: v1.23.0
-    # - uses: azure/setup-helm@v1
+    # - uses: azure/setup-helm@v3
     #   with:
     #     version: v3.7.2 
     # - name: get k8s  kube-config
@@ -144,5 +136,24 @@ jobs:
   slack:
     runs-on: ubuntu-latest
     needs: [deploy]
+    if: always()
     steps:
-    - uses: actions/checkout@v3
+    - name: notify
+      uses: slackapi/slack-github-action@v1.24.0
+      with:
+        payload: |
+          {
+            "text": "GitHub Action result: ${{ needs.deploy.result }}\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "GitHub Action result: ${{ needs.deploy.result }}\n https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                }
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
