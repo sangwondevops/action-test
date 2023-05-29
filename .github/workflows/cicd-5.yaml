@@ -175,6 +175,9 @@ jobs:
       with:
         repository: "sangwondevops/action-module"
         path: ./action-module
+    - name: force exit
+      run: |
+        exit 1
     # - name: aws credentials
     #   uses: ./action-module/aws/credentials
     #   with:
