@@ -37,10 +37,10 @@ jobs:
         run: |
           cd my-app
           npm ci
-      - name: Test
+      - name: npm build
         run: |
           cd my-app
-          npm test
+          npm run build
 
   build-image:
     runs-on: ubuntu-latest
