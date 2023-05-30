@@ -1,4 +1,4 @@
-replica: 2
+replica: 1
 image:
   repository: 002174788893.dkr.ecr.ap-northeast-1.amazonaws.com/example-a
   pullPolicy: IfNotPresent
