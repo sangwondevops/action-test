@@ -1,4 +1,4 @@
-name: argocd-2
+name: argocd-1
 permissions:
   pull-requests: write
   contents: write
@@ -92,20 +92,41 @@ jobs:
         with:
           repository: "sangwondevops/argo-helm-chart"
           ref: master
-      - name: fetch actions repo
-        uses: actions/checkout@v3
-        with:
-          repository: "sangwondevops/action-module"
-          path: ./action-module
-          ref: ${{ vars.ref }}
-      - name: image patch
+      - name: gh auth login
+        run: |
+          echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
+      - name: get github sha
+        run: |
+          echo ${{ github.sha }}
+          git remote -v 
+
+          sed -i "s|tag: .*|tag: ${{ github.sha }}|" appications/example/example-a/helm-chart/values/${{ matrix.environment }}/image.yaml
+          git add .
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -m "Update example-a image tag in ${{ matrix.environment }}."
+          git push origin master
+
+      - name: create pr to master
         id: var
-        uses: "./action-module/common/patch-image"
-        with:
-          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          PROJECT: "example"
-          PROJECT_NAME: "example-a"
-          ENVIRONMENT: ${{ matrix.environment }}
+        run: |
+          if [[ ${{ matrix.environment }} == "staging" ]]; then
+            timestamp=`echo $(date +%Y-%m-%d-%H-%M-%S)`
+            git pull origin master
+            git checkout -b example-a-$timestamp
+
+            sed -i "s|tag: .*|tag: ${{ github.sha }}|" appications/example/example-a/helm-chart/values/production/image.yaml
+
+            git add .
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git commit -m "Update example-a image tag in Production."
+            git push origin example-a-$timestamp
+
+            pr_url=$(gh pr create --base master --title "Update example-a Image tag in Production." --body "Update image tag to production" --head example-a-$timestamp)
+            echo "APPROVE_PR_URL=$pr_url" >> $GITHUB_OUTPUT
+            echo "APPROVE_PR_URL: $pr_url"
+          fi
     
   create-pr:
     runs-on: ubuntu-latest
@@ -144,8 +165,44 @@ jobs:
     - name: Send PR URL
       if: |
         needs.set-environment.outputs.set-env == 'staging'
-      uses: ./action-module/common/patch-image/slack
+      id: slack
+      uses: slackapi/slack-github-action@v1.24.0
       with:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        APPROVE_PR_URL: ${{ needs.patch-image.outputs.APPROVE_PR_URL }}
+        payload: |
+          {
+            "attachments": [
+                {
+                    "fallback": "Approve for prod deploy",
+                    "color": "#3AA3E3",
+                    "text": "Approve for prod deploy",
+                    "fields": [
+                        {
+                            "title": "Branch",
+                            "value": "${{ github.ref_name }}",
+                            "short": true
+                        },
+                        {
+                            "title": "Repository",
+                            "value": "${{ github.repository }}",
+                            "short": true
+                        },
+                        {
+                            "title": "Actor",
+                            "value": "${{ github.actor }}",
+                            "short": true
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "type": "button",
+                            "text": "Approve for prod deploy",
+                            "url" : "${{ needs.patch-image.outputs.APPROVE_PR_URL }}"
+                        }
+                    ]
+                }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
