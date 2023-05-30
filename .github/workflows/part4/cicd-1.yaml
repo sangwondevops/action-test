@@ -98,7 +98,7 @@ jobs:
     - name: get k8s  kube-config
       run: |
         aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER }}
-    - name: deploy kubernetes manifest
+    - name: deploy kubernetes manifest Using helm
       run: |
         helm upgrade --install example-a kubernetes/example-a --create-namespace --namespace example-a-${{ matrix.environment }} --wait --atomic \
         --timeout 15m \
