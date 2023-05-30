@@ -194,7 +194,7 @@ jobs:
         EKS_CLUSTER: ${{ secrets.EKS_CLUSTER }} 
         RELEASE_NAME: example-a
         HELM_CHART_PATH: kubernetes/example-a 
-        NAMESPACE: example-a-prod
+        NAMESPACE: example-a-production
         VALUES_PATH: ${{ vars.VALUES_PATH }}
     - name: notify(success)
       if: success()
