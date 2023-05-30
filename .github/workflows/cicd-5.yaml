@@ -79,8 +79,8 @@ jobs:
       - name: Access ECR
         uses: ./action-module/common/docker/image
         with:
-          REPOSITORY: ${{ secrets.ECR_REPOSITORY }} 
-          REGISTRY: ${{ secrets.ECR_REGISTRY }} 
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }} 
+          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }} 
           
                  
   deploy:
