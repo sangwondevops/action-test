@@ -73,7 +73,7 @@ jobs:
           repository: "sangwondevops/action-module"
           path: ./action-module
       - name: aws credentials
-        uses: ./action-module/aws/credentials
+        uses: ./action-module/common/aws/credentials
         with:
           AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       - name: Access ECR
@@ -99,7 +99,7 @@ jobs:
         repository: "sangwondevops/action-module"
         path: ./action-module
     - name: aws credentials
-      uses: ./action-module/aws/credentials
+      uses: ./action-module/common/aws/credentials
       with:
         role-arn: ${{ secrets.AWS_ROLE_ARN }}
     - name: deploy kubernetes
