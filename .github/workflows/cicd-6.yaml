@@ -1,17 +1,22 @@
-name: versioning cicd 1
+name: versioning cicd 
 permissions:
-  pull-requests: write
+  id-token: write
   contents: write
+  pull-requests: write
 on:
   push:
     branches: [develop, production]
+    paths:
+      - 'my-app/**'
+      - 'kubernetes/example-a/**'
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
   pull_request:
     types: [opened, reopened, synchronize]
     branches: [develop, production]
-    # tags-ignore:
-    #   - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+    paths:
+      - 'my-app/**'
+      - 'kubernetes/example-a/**'
 
 jobs:
   set-environment:
@@ -25,7 +30,7 @@ jobs:
         with:
           repository: "sangwondevops/action-module"
           path: ./action-module
-          ref: ${{ vars.ref }}
+          ref: ${{ vars.REF }}
       - name: check file list
         run: |
           ls action-module
@@ -45,7 +50,7 @@ jobs:
         with:
           repository: "sangwondevops/action-module"
           path: ./action-module
-          ref: ${{ vars.ref }}
+          ref: ${{ vars.REF }}
       - uses: ./action-module/common/cache
         with:
           NODE_VERSION: '18'
@@ -68,16 +73,16 @@ jobs:
         with:
           repository: "sangwondevops/action-module"
           path: ./action-module
-          ref: ${{ vars.ref }}
-      # - name: aws credentials
-      #   uses: ./action-module/aws/credentials
-      #   with:
-      #     AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      # - name: Access ECR
-      #   uses: ./action-module/docker/image
-      #   with:
-      #     REGISTRY: ${{ secrets.REGISTRY }} 
-      #     REPOSITORY: ${{ secrets.REPOSITORY }} 
+          ref: ${{ vars.REF }}
+      - name: aws credentials
+        uses: ./action-module/common/aws/credentials
+        with:
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      - name: Access ECR
+        uses: ./action-module/common/docker/image
+        with:
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }} 
+          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }} 
                  
   deploy:
     runs-on: ubuntu-latest
@@ -94,19 +99,19 @@ jobs:
       with:
         repository: "sangwondevops/action-module"
         path: ./action-module
-        ref: ${{ vars.ref }}
-    # - name: aws credentials
-    #   uses: ./action-module/aws/credentials
-    #   with:
-    #     role-arn: ${{ secrets.AWS_ROLE_ARN }}
-    # - name: deploy kubernetes
-    #   uses: ./action-module/deploy/kubernetes
-    #   with:
-    #     EKS_CLUSTER: ${{ secrets.EKS_CLUSTER }} 
-    #     RELEASE_NAME: example-a
-    #     HELM_CHART_PATH: helm-chart
-    #     NAMESPACE: ${{ secrets.NAMESPACE }}-${{ matrix.environment }}
-    #     VALUES_PATH: ${{ secrets.VALUES_PATH }}
+        ref: ${{ vars.REF }}
+    - name: aws credentials
+      uses: ./action-module/common/aws/credentials
+      with:
+        AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+    - name: deploy kubernetes
+      uses: ./action-module/common/deploy/kubernetes
+      with:
+        EKS_CLUSTER: ${{ secrets.EKS_CLUSTER }} 
+        RELEASE_NAME: example-a
+        HELM_CHART_PATH: kubernetes/example-a
+        NAMESPACE: example-a-${{ matrix.environment }}
+        VALUES_PATH: ${{ vars.VALUES_PATH }}
   
   create-pr:
     runs-on: ubuntu-latest
@@ -121,7 +126,7 @@ jobs:
       with:
         repository: "sangwondevops/action-module"
         path: ./action-module
-        ref: ${{ vars.ref }}
+        ref: ${{ vars.REF }}
     - name: create-pr
       uses: ./action-module/common/create-pr
       with:
@@ -138,7 +143,7 @@ jobs:
       with:
         repository: "sangwondevops/action-module"
         path: ./action-module
-        ref: ${{ vars.ref }}
+        ref: ${{ vars.REF }}
     - name: notify (staging)
       if: |
         needs.set-environment.outputs.set-env == 'staging'
@@ -182,19 +187,19 @@ jobs:
       with:
         repository: "sangwondevops/action-module"
         path: ./action-module
-        ref: ${{ vars.ref }}
-    # - name: aws credentials
-    #   uses: ./action-module/aws/credentials
-    #   with:
-    #     role-arn: ${{ secrets.AWS_ROLE_ARN }}
-    # - name: deploy kubernetes
-    #   uses: ./action-module/deploy/kubernetes
-    #   with:
-    #     EKS_CLUSTER: ${{ secrets.EKS_CLUSTER }} 
-    #     RELEASE_NAME: example-a
-    #     HELM_CHART_PATH: helm-chart
-    #     NAMESPACE: ${{ secrets.NAMESPACE }}-prod
-    #     VALUES_PATH: ${{ secrets.VALUES_PATH }}
+        ref: ${{ vars.REF }}
+    - name: aws credentials
+      uses: ./action-module/common/aws/credentials
+      with:
+        AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+    - name: deploy kubernetes
+      uses: ./action-module/common/deploy/kubernetes
+      with:
+        EKS_CLUSTER: ${{ secrets.EKS_CLUSTER }} 
+        RELEASE_NAME: example-a
+        HELM_CHART_PATH: kubernetes/example-a 
+        NAMESPACE: example-a-production
+        VALUES_PATH: ${{ vars.VALUES_PATH }}
     - name: notify(success)
       if: success()
       uses: ./action-module/common/slack
