@@ -94,7 +94,7 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-      - name: docker test
+      - name: docker build & push
         run: |
           docker build -f Dockerfile . \
           --tag ${{ env.registry }}/${{ env.repository }}:latest \
@@ -113,7 +113,8 @@ jobs:
         environment: ["${{ needs.set-environment.outputs.set-env }}"]
     environment: ${{ matrix.environment }}
     steps:
-    - uses: actions/checkout@v3
+    - name: checkout the code
+      uses: actions/checkout@v3
     - name: Configure AWS Credentials
       id: credentials
       uses: aws-actions/configure-aws-credentials@v2
