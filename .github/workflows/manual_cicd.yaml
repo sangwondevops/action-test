@@ -1,5 +1,6 @@
 name: manual cicd
 permissions:
+  id-token: write
   pull-requests: write
   contents: write
 on:
