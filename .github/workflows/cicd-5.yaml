@@ -44,16 +44,16 @@ jobs:
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
-      - name: fetch actions repo
-        uses: actions/checkout@v3
-        with:
-          repository: "sangwondevops/action-module"
-          path: ./action-module
-      - name: Cache Node.js modules
-        uses: ./action-module/common/cache
-        with:
-          NODE_VERSION: '18'
-          WORKING_DIRECTORY: 'my-app'
+      # - name: fetch actions repo
+      #   uses: actions/checkout@v3
+      #   with:
+      #     repository: "sangwondevops/action-module"
+      #     path: ./action-module
+      # - name: Cache Node.js modules
+      #   uses: ./action-module/common/cache
+      #   with:
+      #     NODE_VERSION: '18'
+      #     WORKING_DIRECTORY: 'my-app'
 
   build-image:
     runs-on: ubuntu-latest
@@ -101,7 +101,7 @@ jobs:
     - name: aws credentials
       uses: ./action-module/common/aws/credentials
       with:
-        role-arn: ${{ secrets.AWS_ROLE_ARN }}
+        AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
     - name: deploy kubernetes
       uses: ./action-module/common/deploy/kubernetes
       with:
@@ -187,7 +187,7 @@ jobs:
     - name: aws credentials
       uses: ./action-module/common/aws/credentials
       with:
-        role-arn: ${{ secrets.AWS_ROLE_ARN }}
+        AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
     - name: deploy kubernetes
       uses: ./action-module/common/deploy/kubernetes
       with:
