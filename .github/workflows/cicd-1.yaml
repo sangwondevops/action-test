@@ -100,7 +100,7 @@ jobs:
         aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER }}
     - name: deploy kubernetes manifest
       run: |
-        helm upgrade --install example-a kubernetes/example-a --create-namespace example-a-${{ matrix.environment }} --namespace example-a-${{ matrix.environment }} --wait --atomic \
+        helm upgrade --install example-a kubernetes/example-a --create-namespace --namespace example-a-${{ matrix.environment }} --wait --atomic \
         --timeout 15m \
         --values kubernetes/example-a/values/${{ matrix.environment }}/values.yaml \
         --set image.tag=${{ github.sha }}
