@@ -79,10 +79,8 @@ jobs:
         environment: ["develop"]
     environment: ${{ matrix.environment }}
     steps:
-    - uses: actions/checkout@v3
-    - name: force fail
-      run: |
-        exit 1
+    - name: checkout the code
+      uses: actions/checkout@v3
     - name: Configure AWS Credentials
       id: credentials
       uses: aws-actions/configure-aws-credentials@v2
