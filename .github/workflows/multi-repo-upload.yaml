@@ -1,0 +1,88 @@
+name: multi repo upload file
+on:
+  workflow_dispatch:
+    inputs:
+      repo_type:
+        description: 'set repo type'
+        required: true
+        default: 'public'
+        type: choice
+        options:
+          - public
+          - private
+      upload_file:
+        description: 'set upload file'
+        required: true
+        default: 'test.txt'
+        type: choice
+        options:
+          - test.txt
+
+jobs:
+  repo-list:
+    runs-on: ubuntu-latest
+    outputs:
+      repo: ${{ steps.repo-list.outputs.selected_repo }}
+    steps:
+    - name : checkout repo
+      uses: actions/checkout@v3
+    - name: mkdir result
+      run: |
+        mkdir -p upload-file
+    - name: mv test.txt -> upload-file/test.txt
+      run: |
+        cp -r test.txt ./upload-file/test.txt
+    - name: Upload result
+      uses: actions/upload-artifact@v3
+      with:
+        name: upload-file
+        path: upload-file/test.txt
+    - name: gh auth login
+      run: |
+        echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
+    - name: repo list
+      id: repo-list
+      run: |
+        gh repo list sangwondevops ----visibility ${{ inputs.repo_type }} --json name > repo_list.json
+        echo "selected_repo=$(cat repo_list.json)" >> $GITHUB_OUTPUT
+        cat repo_list.json
+        
+    
+
+  upload-file:
+    needs: [ repo-list ]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 256
+      matrix:
+        repo: ${{fromJson(needs.repo-list.outputs.repo)}}
+    steps:
+    - name: gh auth login
+      run: |
+        echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
+    - name: check output
+      run: |
+        echo ${{fromJson(needs.repo-list.outputs.repo)}}
+        echo " ============================================ "
+        echo ${{toJson(needs.repo-list.outputs.repo)}}
+    - name : checkout selected_repo
+      uses: actions/checkout@v3
+      with:
+        repository: sangwondevops/${{ matrix.repo.name }}
+    - name: Download result
+      uses: actions/download-artifact@v3
+      with:
+        name: upload-file
+        path: upload-file
+    - name: mv upload-file/test.txt -> test.txt
+      run: |
+        mv upload-file/test.txt ${{ github.workspace }}/test.txt
+        rm -rf upload-file/test.txt
+    - name: commit & push
+      run: |
+        git add .
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git commit -m "Upload file: ${{ inputs.upload_file }}"
+        git push origin master
