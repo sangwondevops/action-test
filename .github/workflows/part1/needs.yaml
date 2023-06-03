@@ -1,0 +1,36 @@
+name: needs
+on: push
+
+jobs:
+  push-1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: echo
+        run: echo "push-1 job done"
+  
+  push-2:
+    needs: [push-1]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: echo
+        run: echo "push-2 job done"
+
+  push-3:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: exit 1
+        run: |
+          echo "push-3 job failed"
+          exit 1
+  
+  push-4:
+    needs: [push-3]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: echo
+        run: |
+          echo "push-4 job done"
