@@ -86,8 +86,6 @@ jobs:
     - name: commit & push
       run: |
         git add .
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
         git commit -m "Upload file: ${{ inputs.upload_file }}"
         git push origin master
     - name: Setup tmate session
