@@ -28,6 +28,8 @@ jobs:
     steps:
     - name : checkout repo
       uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
     - name: mkdir result
       run: |
         mkdir -p upload-file
@@ -39,9 +41,6 @@ jobs:
       with:
         name: upload-file
         path: upload-file/${{ inputs.upload_file }}
-    - name: gh auth login
-      run: |
-        echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
     - name: repo list
       id: repo-list
       run: |
@@ -49,8 +48,6 @@ jobs:
         echo "selected_repo=$(cat repo_list.json)" >> $GITHUB_OUTPUT
         cat repo_list.json
         
-    
-
   upload-file:
     needs: [ repo-list ]
     runs-on: ubuntu-latest
@@ -68,9 +65,9 @@ jobs:
         exit 1
     - name: check output
       run: |
-        echo ${{fromJson(needs.repo-list.outputs.repo)}}
         echo " ============================================ "
         echo ${{toJson(needs.repo-list.outputs.repo)}}
+        echo ${{ matrix.repo.name }}
     - name : checkout selected_repo
       uses: actions/checkout@v3
       with:
@@ -83,7 +80,7 @@ jobs:
         path: upload-file
     - name: mv upload-file/${{ inputs.upload_file }} -> ${{ inputs.upload_file }}
       run: |
-        mv upload-file/${{ inputs.upload_file }} ${{ github.workspace }}/${{ inputs.upload_file }}
+        mv upload-file/${{ inputs.upload_file }} ${{ inputs.upload_file }}
         rm -rf upload-file
     - name: commit & push
       run: |
@@ -92,7 +89,4 @@ jobs:
         git config --local user.name "github-actions[bot]"
         git commit -m "Upload file: ${{ inputs.upload_file }}"
         git push origin master
-    - name: Setup tmate session
-      if: ${{ failure() }}
-      uses: mxschmitt/action-tmate@v3
-      timeout-minutes: 3
+
