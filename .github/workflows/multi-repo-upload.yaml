@@ -66,9 +66,6 @@ jobs:
       run: |
         echo "exclude repo."
         exit 1
-    - name: gh auth login
-      run: |
-        echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
     - name: check output
       run: |
         echo ${{fromJson(needs.repo-list.outputs.repo)}}
