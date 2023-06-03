@@ -1,4 +1,8 @@
 name: multi repo upload file
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
 on:
   workflow_dispatch:
     inputs:
