@@ -31,14 +31,14 @@ jobs:
     - name: mkdir result
       run: |
         mkdir -p upload-file
-    - name: mv test.txt -> upload-file/test.txt
+    - name: mv ${{ inputs.upload_file }} -> upload-file/${{ inputs.upload_file }}
       run: |
-        cp -r test.txt ./upload-file/test.txt
+        cp -r ${{ inputs.upload_file }}  ./upload-file/${{ inputs.upload_file }}
     - name: Upload result
       uses: actions/upload-artifact@v3
       with:
         name: upload-file
-        path: upload-file/test.txt
+        path: upload-file/${{ inputs.upload_file }}
     - name: gh auth login
       run: |
         echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
@@ -81,9 +81,9 @@ jobs:
       with:
         name: upload-file
         path: upload-file
-    - name: mv upload-file/test.txt -> test.txt
+    - name: mv upload-file/${{ inputs.upload_file }} -> ${{ inputs.upload_file }}
       run: |
-        mv upload-file/test.txt ${{ github.workspace }}/test.txt
+        mv upload-file/${{ inputs.upload_file }} ${{ github.workspace }}/${{ inputs.upload_file }}
         rm -rf upload-file
     - name: commit & push
       run: |
