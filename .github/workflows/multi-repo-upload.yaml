@@ -28,8 +28,6 @@ jobs:
     steps:
     - name : checkout repo
       uses: actions/checkout@v3
-      with:
-        token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
     - name: mkdir result
       run: |
         mkdir -p upload-file
@@ -41,6 +39,9 @@ jobs:
       with:
         name: upload-file
         path: upload-file/${{ inputs.upload_file }}
+    - name: gh auth login
+      run: |
+        echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
     - name: repo list
       id: repo-list
       run: |
