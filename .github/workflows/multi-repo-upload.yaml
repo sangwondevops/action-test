@@ -62,6 +62,12 @@ jobs:
       matrix:
         repo: ${{fromJson(needs.repo-list.outputs.repo)}}
     steps:
+    - name: exclude repo
+      if: |
+        ( matrix.repo.name == 'action-test' ) 
+      run: |
+        echo "exclude repo."
+        exit 1
     - name: gh auth login
       run: |
         echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
