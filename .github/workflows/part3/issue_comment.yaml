@@ -26,19 +26,24 @@ jobs:
         id: branch-deploy
         with:
           trigger: ".deploy"
+      - name: check output
+        run: |
+          echo "${{ toJson(steps.branch-deploy.outputs) }}" 
       - uses: actions/checkout@v3
         with:
           ref: ${{ steps.branch-deploy.outputs.ref }}
       - name: fake noop deploy
         if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop == 'true' }}
-        run: echo "I am doing a fake noop deploy"
+        run: |
+          echo "I am doing a fake noop deploy"
       - name: fake regular deploy
         if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop != 'true' }}
-        run: echo "I am doing a fake regular deploy"
+        run: |
+          echo "I am doing a fake regular deploy"
 
-  deploy-rollback:
+  deploy-hello:
     if: |
-      github.event.issue.pull_request && contains(github.event.comment.body, 'rollback') 
+      github.event.issue.pull_request && contains(github.event.comment.body, 'hello') 
     runs-on: ubuntu-latest
     steps:
       - name: echo
@@ -53,12 +58,17 @@ jobs:
         id: branch-deploy
         with:
           trigger: ".deploy"
+      - name: check output
+        run: |
+          echo "${{ toJson(steps.branch-deploy.outputs) }}" 
       - uses: actions/checkout@v3
         with:
           ref: ${{ steps.branch-deploy.outputs.ref }}
       - name: fake noop deploy
         if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop == 'true' }}
-        run: echo "I am doing a fake noop deploy"
+        run: |
+          echo "I am doing a fake noop deploy"
       - name: fake regular deploy
         if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop != 'true' }}
-        run: echo "I am doing a fake regular deploy"
+        run: |
+          echo "I am doing a fake regular deploy"
