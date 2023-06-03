@@ -39,15 +39,14 @@ jobs:
       with:
         name: upload-file
         path: upload-file/${{ inputs.upload_file }}
-    - name: gh auth login
-      run: |
-        echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
     - name: repo list
       id: repo-list
       run: |
         gh repo list sangwondevops --visibility ${{ inputs.repo_type }} --json name > repo_list.json
         echo "selected_repo=$(cat repo_list.json)" >> $GITHUB_OUTPUT
         cat repo_list.json
+      env:
+        GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         
   upload-file:
     needs: [ repo-list ]
