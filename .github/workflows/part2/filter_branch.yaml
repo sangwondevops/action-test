@@ -2,11 +2,7 @@ name: filter
 
 on:
   pull_request:
-    types: [ opened, synchronize, reopened ]
-    branches: [ "part1" ]
-    paths:
-      - 'filter/pr/*.txt'
-      - '!filter/pr/basic.txt'
+    branches: [ "develop" ]
 
 jobs:
   filter:
