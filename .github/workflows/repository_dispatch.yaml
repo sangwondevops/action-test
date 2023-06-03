@@ -1,0 +1,13 @@
+name: repository_dispatch
+on:
+  repository_dispatch:
+    types: [test]
+
+jobs:
+  repository_dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: check payload
+        run: |
+          echo ${{ github.event.client_payload.name }}
+          echo ${{ github.event.client_payload.count }}
