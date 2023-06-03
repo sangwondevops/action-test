@@ -9,9 +9,9 @@ permissions:
   checks: read
 
 jobs:
-  deploy-test:
+  deploy-dev:
     if: |
-      github.event.issue.pull_request && contains(github.event.comment.body, 'test') 
+      github.event.issue.pull_request && contains(github.event.comment.body, 'deploy dev')
     runs-on: ubuntu-latest
     steps:
       - name: echo
@@ -21,29 +21,13 @@ jobs:
           echo "${{ toJson(github.event) }}"
           echo "======================="
           echo ${{ github.event.comment.body }}
-          ${{ steps.branch-deploy.outputs.ref }}
-      - uses: github/branch-deploy@v5.2.2
-        id: branch-deploy
-        with:
-          trigger: ".deploy"
-      - name: check output
+      - name: deploy dev
         run: |
-          echo "${{ toJson(steps.branch-deploy.outputs) }}" 
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ steps.branch-deploy.outputs.ref }}
-      - name: fake noop deploy
-        if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop == 'true' }}
-        run: |
-          echo "I am doing a fake noop deploy"
-      - name: fake regular deploy
-        if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop != 'true' }}
-        run: |
-          echo "I am doing a fake regular deploy"
+          echo "Deploy dev"
 
-  deploy-hello:
+  deploy-prod:
     if: |
-      github.event.issue.pull_request && contains(github.event.comment.body, 'hello') 
+      github.event.issue.pull_request && contains(github.event.comment.body, 'deploy prod')
     runs-on: ubuntu-latest
     steps:
       - name: echo
@@ -53,22 +37,6 @@ jobs:
           echo "${{ toJson(github.event) }}"
           echo "======================="
           echo ${{ github.event.comment.body }}
-          ${{ steps.branch-deploy.outputs.ref }}
-      - uses: github/branch-deploy@v5.2.2
-        id: branch-deploy
-        with:
-          trigger: ".check"
-      - name: check output
+      - name: deploy prod
         run: |
-          echo "${{ toJson(steps.branch-deploy.outputs) }}" 
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ steps.branch-deploy.outputs.ref }}
-      - name: fake noop deploy
-        if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop == 'true' }}
-        run: |
-          echo "I am doing a fake noop deploy"
-      - name: fake regular deploy
-        if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop != 'true' }}
-        run: |
-          echo "I am doing a fake regular deploy"
+          echo "Deploy prod"
