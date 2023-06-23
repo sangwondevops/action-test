@@ -2,35 +2,31 @@ name: needs
 on: push
 
 jobs:
-  push-1:
+  job1:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
       - name: echo
-        run: echo "push-1 job done"
+        run: echo "job1 done" 
   
-  push-2:
-    needs: [push-1]
+  job2:
+    needs: [job1]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
       - name: echo
-        run: echo "push-2 job done"
+        run: echo "job2 job done"
 
-  push-3:
+  job3:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
       - name: exit 1
         run: |
-          echo "push-3 job failed"
+          echo "job3 failed"
           exit 1
   
-  push-4:
+  job4:
     needs: [push-3]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
       - name: echo
         run: |
-          echo "push-4 job done"
+          echo "job4 job done"
