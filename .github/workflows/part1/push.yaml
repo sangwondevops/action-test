@@ -5,9 +5,9 @@ jobs:
   push:
     runs-on: ubuntu-latest
     steps:
-      - name: Run a one-line script
+      - name: step1 echo hello world
         run: echo Hello, world!
-      - name: Run a multi-line script
+      - name: step2 echo github action
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          echo Hello, world!
+          echo github action !
