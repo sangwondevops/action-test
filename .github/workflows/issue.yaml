@@ -1,7 +1,7 @@
 name: issue
 on:
   issues:
-    types: [opened] #[opened, edited]
+    types: [opened, edited]
 
 jobs:
   issue:
