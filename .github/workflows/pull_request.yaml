@@ -1,0 +1,57 @@
+# name: pull_request
+# on: pull_request
+
+# jobs:
+#   pull_request:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: step1 echo hello world
+#         run: echo Hello, world!
+#       - name: step2 echo github action
+#         run: |
+#           echo Hello, world!
+#           echo github action !
+
+
+# name: pull_request open
+# on:
+#   pull_request:
+#     types: [opened]
+
+# jobs:
+#   merge:
+#     if: github.event.pull_request.merged == true
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: step1 echo hello world
+#         run: echo Hello, world!
+#       - name: step2 echo github action
+#         run: |
+#           echo Hello, world!
+#           echo github action !
+
+name: merge
+on:
+  pull_request:
+    types: [opened, closed]
+
+jobs:
+  pr-open:
+    if: github.event.pull_request.merged != true
+    runs-on: ubuntu-latest
+    steps:
+      - name: echo github action
+        run: |
+          echo "${{ toJson(github.event.pull_request) }}"
+          
+          
+  merge:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: step1 echo hello world
+        run: echo Hello, world!
+      - name: step2 echo github action
+        run: |
+          echo Hello, world!
+          echo github action !

@@ -1,9 +1,10 @@
 name: issue_comment
-on: issue_comment
+on: 
+  issue_comment:
+    types: [opened]
 
 jobs:
-  pr_commented:
-    name: PR comment
+  pr_comment:
     if: ${{ github.event.issue.pull_request }}
     runs-on: ubuntu-latest
     steps:
@@ -11,8 +12,7 @@ jobs:
           echo ${{ github.event.issue.number }}
           echo "${{ toJson(github.event) }}"
 
-  issue_commented:
-    name: Issue comment
+  issue_comment:
     if: ${{ !github.event.issue.pull_request }}
     runs-on: ubuntu-latest
     steps:

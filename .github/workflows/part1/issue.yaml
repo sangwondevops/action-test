@@ -1,8 +1,10 @@
-name: push
-on: push
+name: issue
+on:
+  issues:
+    types: [opened, edited]
 
 jobs:
-  push:
+  issue:
     runs-on: ubuntu-latest
     steps:
       - name: step1 echo hello world
