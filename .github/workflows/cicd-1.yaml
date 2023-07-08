@@ -70,10 +70,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: [ build-image ]
-    strategy:
-      matrix:
-        environment: ["develop"]
-    environment: ${{ matrix.environment }}
+    environment: develop
     steps:
     - name: checkout the code
       uses: actions/checkout@v3
