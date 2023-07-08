@@ -33,9 +33,22 @@
 name: merge
 on:
   pull_request:
-    types: [closed]
+    types: [opened, closed]
 
 jobs:
+  pr-open:
+    runs-on: ubuntu-latest
+    steps:
+      - name: echo github action
+        run: |
+          echo ${{ github.event.pull_request }}
+          echo ${{ github.event }}
+          echo "=============================="
+          echo "${{ toJson(github.event) }}"
+          echo "=============================="
+          echo "${{ toJson(github.event.pull_request) }}"
+          
+          
   merge:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
