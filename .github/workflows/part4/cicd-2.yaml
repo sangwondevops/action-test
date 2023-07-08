@@ -144,7 +144,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [set-environment, deploy]
     if: |
-      always() && (needs.deploy.result == 'success' || needs.deploy.result == 'failure')
+      always()
     steps:
     - name: checkout
       run: |

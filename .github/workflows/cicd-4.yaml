@@ -1,4 +1,4 @@
-name: cicd-3 # Deploy develop, QA, production / cicd v0.1.6-rc.2
+name: cicd-4 # Deploy develop, QA, staging, production
 permissions:
   id-token: write
   contents: write
@@ -52,13 +52,13 @@ jobs:
         run: |
           echo ${{ steps.var.outputs.set-env }}
           echo ${{ steps.var.outputs.set-tag }}
-
+          
   test:
     runs-on: ubuntu-latest
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
-      # - name: setup-node
+      # - name: checkout the code
       #   uses: actions/setup-node@v3
       #   with:
       #     node-version: 18
@@ -193,7 +193,7 @@ jobs:
       run: |
         git checkout -b release/${{ steps.extract.outputs.extract-tag }}
         git push -f origin release/${{ steps.extract.outputs.extract-tag }}
-        
+  
   slack:
     runs-on: ubuntu-latest
     needs: [set-environment, deploy]
@@ -205,16 +205,53 @@ jobs:
         echo "hello"
     # - name: notify
     #   uses: slackapi/slack-github-action@v1.24.0
+    #   if: |
+    #     needs.set-environment.outputs.set-env == 'staging' &&
+    #     needs.deploy.result == 'success'
     #   with:
     #     payload: |
     #       {
-    #         "text": "Environment : ${{ needs.set-environment.outputs.set-env }}, Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}.",
+    #         "text": "Environment : ${{ needs.set-environment.outputs.set-env }}, Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}.",
     #         "blocks": [
     #           {
     #             "type": "section",
     #             "text": {
     #               "type": "mrkdwn",
-    #               "text": "Environment : ${{ needs.set-environment.outputs.set-env }}, Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}."
+    #               "text": "Environment : ${{ needs.set-environment.outputs.set-env }}, Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}."
+    #             }
+    #           },
+    #           {
+    #             "type": "actions",
+    #             "elements": [
+    #               {
+    #               "type": "button",
+    #               "text": {
+    #                 "type": "plain_text",
+    #                 "text": "Approve for prod deploy"
+    #               },
+    #               "url" : "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+    #               }
+    #             ]
+    #           }
+    #         ]
+    #       }
+    #   env:
+    #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+    # - name: notify
+    #   uses: slackapi/slack-github-action@v1.24.0
+    #   if: |
+    #     needs.set-environment.outputs.set-env != 'staging' 
+    #   with:
+    #     payload: |
+    #       {
+    #         "text": "Environment : ${{ needs.set-environment.outputs.set-env }}, Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}.",
+    #         "blocks": [
+    #           {
+    #             "type": "section",
+    #             "text": {
+    #               "type": "mrkdwn",
+    #               "text": "Environment : ${{ needs.set-environment.outputs.set-env }}, Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}."
     #             }
     #           }
     #         ]
@@ -222,13 +259,79 @@ jobs:
     #   env:
     #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-  
+
+  approve:
+    runs-on: ubuntu-latest
+    environment: approve
+    needs: [ set-environment, deploy, slack ]
+    if: |
+      needs.set-environment.outputs.set-env == 'staging'
+    steps:
+      - name: approve
+        run: |
+          echo "Approve Done. Start Prod deploy"
+
+  prod-deploy:
+    runs-on: ubuntu-latest
+    needs: [ approve ]
+    strategy:
+      matrix:
+        environment: ["production"]
+    environment: ${{ matrix.environment }}
+    steps:
+    - name: checkout the code
+      uses: actions/checkout@v3
+    # - name: fetch actions repo
+    #   uses: actions/checkout@v3
+    #   with:
+    #     repository: "devopssangwon/action-module"
+    #     path: "./action-module"
+    #     ref: master
+    # - name: aws credentials
+    #   uses: "./action-module/credentials/aws"
+    #   with:
+    #     role-arn: ${{ secrets.AWS_ROLE_ARN }}
+    # - name: setup-kubectl
+    #   uses: azure/setup-kubectl@v1
+    #   with:
+    #     version: v1.25.0
+    # - name: setup-helm
+    #   uses: azure/setup-helm@v1
+    #   with:
+    #     version: v3.7.2 
+    # - name: get k8s  kube-config
+    #   run: |
+    #     aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER }}
+    # - name: deploy kubernetes manifest Using helm
+    #   run: |
+    #     helm upgrade --install example-a kubernetes/example-a --create-namespace --namespace example-a-${{ matrix.environment }} --wait --atomic \
+    #     --timeout 15m \
+    #     --values kubernetes/example-a/values/${{ matrix.environment }}/values.yaml \
+    #     --set image.tag=${{ github.sha }}
+    # - name: notify
+    #   uses: slackapi/slack-github-action@v1.24.0
+    #   if: always()
+    #   with:
+    #     payload: |
+    #       {
+    #         "text": "Environment : Production, Deploy Result: ${{ needs.deploy.result }} in environment: production, repository: ${{ github.repository }}.",
+    #         "blocks": [
+    #           {
+    #             "type": "section",
+    #             "text": {
+    #               "type": "mrkdwn",
+    #               "text": "Environment : Production, Deploy Result: ${{ needs.deploy.result }} in environment: production, repository: ${{ github.repository }}."
+    #             }
+    #           }
+    #         ]
+    #       }
+    #   env:
+    #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
   create-release:
     runs-on: ubuntu-latest
-    needs: [set-environment, deploy]
-    if: |
-      needs.deploy.result == 'success' && needs.set-environment.outputs.set-env == 'production' &&
-      contains(github.head_ref, 'release') 
+    needs: [prod-deploy]
     steps: 
       - name: checkout the code
         uses: actions/checkout@v3
@@ -238,3 +341,5 @@ jobs:
       - name: create release using gh cli
         run: |
           gh release create ${GITHUB_HEAD_REF#*/} --target ${GITHUB_HEAD_REF} --notes "${GITHUB_HEAD_REF#*/} Release" --generate-notes
+  
+  
