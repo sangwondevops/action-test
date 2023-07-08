@@ -111,13 +111,13 @@ jobs:
     #   with:
     #     payload: |
     #       {
-    #         "text": "Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}.",
+    #         "text": "Environment : Develop, Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}",
     #         "blocks": [
     #           {
     #             "type": "section",
     #             "text": {
     #               "type": "mrkdwn",
-    #               "text": "Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}."
+    #               "text": "Environment : Develop, Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}."
     #             }
     #           }
     #         ]
