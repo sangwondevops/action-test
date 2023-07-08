@@ -1,9 +1,17 @@
-name: cicd-2 # Deploy develop, production
+name: cicd-3 # Deploy develop, QA, production
 permissions:
   id-token: write
   contents: write
   pull-requests: write
 on:
+  push:
+    paths:
+      - 'my-app/**'
+      - 'kubernetes/example-a/**'
+      - '*.txt'
+      - '.github/workflows/*'
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
   pull_request:
     types: [opened, reopened, synchronize, closed]
     branches: [develop, production]
@@ -18,18 +26,30 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       set-env: ${{ steps.var.outputs.set-env }}
+      set-tag: ${{ steps.var.outputs.set-tag }}
     steps:
       - name: set env
         id: var
         run: |
-          echo ${{ github.base_ref }}
-          if [[ ${{ github.base_ref }} == "develop" ]]; then
-            echo "set-env=develop" >> "$GITHUB_OUTPUT"
+          if [[ ${{ github.ref_type }} == "tag" ]]; then
+            echo "set-env=qa" >> "$GITHUB_OUTPUT"
+            echo "set-tag=${{ github.base_ref }}" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          echo "set-env=production" >> "$GITHUB_OUTPUT"
-      - name: check env
-        run: echo ${{ steps.var.outputs.set-env }}
+
+          if [[ ${{ github.ref_type }} == "branch" ]]; then
+            if [[ ${{ github.base_ref }} == "develop" ]]; then
+              echo "set-env=develop" >> "$GITHUB_OUTPUT"
+              exit 0
+            elif [[ ${{ github.base_ref }} == "production" ]]; then
+              echo "set-env=production" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+      - name: check output
+        run: |
+          echo ${{ steps.var.outputs.set-env }}
+          echo ${{ steps.var.outputs.set-tag }}
 
   test:
     runs-on: ubuntu-latest
@@ -94,9 +114,9 @@ jobs:
       matrix:
         environment: ["${{ needs.set-environment.outputs.set-env }}"]
     environment: ${{ matrix.environment }}
-    if: github.event.pull_request.merged == true
     steps:
-    - uses: actions/checkout@v3
+    - name: checkout the code
+      uses: actions/checkout@v3
     # - name: Configure AWS Credentials
     #   id: credentials
     #   uses: aws-actions/configure-aws-credentials@v2
@@ -125,27 +145,56 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ set-environment, deploy ]
     if: |
-      github.event.pull_request.merged == true &&
-      needs.set-environment.outputs.set-env == 'develop'
+      needs.set-environment.outputs.set-env == 'qa' 
     steps:
     - name: checkout the code
       uses: actions/checkout@v3
     - name: gh auth login
       run: |
         echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
+    - name: tag filter
+      id: filter
+      run: |
+        tag=${{ needs.set-environment.outputs.set-tag }}
+        tag=${tag%-*}
+        echo $tag
+        echo "filter-tag=$tag" >> $GITHUB_OUTPUT
+    - name: check release branch exist
+      id: var
+      run: |
+        branch=$(gh pr list -s open -H release/${{ steps.filter.outputs.filter-tag }} --json headRefName | jq '.[] | .headRefName')
+        echo "branch: ${branch}"
+        echo "is_branch=false" >> $GITHUB_OUTPUT
+        if [[ ${branch} == *"release/${{ steps.filter.outputs.filter-tag }}"* ]]; then
+          echo "is_branch=true" >> $GITHUB_OUTPUT
+        fi
+    - name: check output 1
+      run: |
+        echo ${{ steps.var.outputs.is_branch }}
+        echo ${{ steps.filter.outputs.filter-tag }}
     - name: create branch
+      if: |
+        steps.var.outputs.is_branch == 'false'
       run: |
-        git checkout -b create-pr-${{ github.run_id }}
-        git push origin create-pr-${{ github.run_id }}
+        git checkout -b release/${{ steps.filter.outputs.filter-tag }}
+        git push origin release/${{ steps.filter.outputs.filter-tag }}
     - name: Create Pull Request
+      if: |
+        steps.var.outputs.is_branch == 'false'
       run: |
-        gh pr create --base production --title "Create PR Develop -> Production" --body "Create PR Develop -> Production" --head create-pr-${{ github.run_id }}
-   
+        gh pr create --base production --title "Create PR Release -> Production" --body "Create PR Release -> Production" --head release/${{ steps.filter.outputs.filter-tag }}
+    - name: update branch
+      if: |
+        steps.var.outputs.is_branch == 'true'
+      run: |
+        git checkout -b release/${{ steps.filter.outputs.filter-tag }}
+        git push -f origin release/${{ steps.filter.outputs.filter-tag }}
+        
   slack:
     runs-on: ubuntu-latest
     needs: [set-environment, deploy]
     if: |
-      always() && (needs.deploy.result == 'success' || needs.deploy.result == 'failure')
+      always() && (needs.deploy.result == 'success' || needs.deploy.result == 'failure') 
     steps:
     - name: checkout
       run: |
@@ -155,13 +204,13 @@ jobs:
     #   with:
     #     payload: |
     #       {
-    #         "text": "Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}.",
+    #         "text": "Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}.",
     #         "blocks": [
     #           {
     #             "type": "section",
     #             "text": {
     #               "type": "mrkdwn",
-    #               "text": "Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}."
+    #               "text": "Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}."
     #             }
     #           }
     #         ]

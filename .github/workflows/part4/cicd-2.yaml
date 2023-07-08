@@ -1,4 +1,4 @@
-name: cicd-1 # Deploy develop only
+name: cicd-2 # Deploy develop, production
 permissions:
   id-token: write
   contents: write
@@ -6,7 +6,7 @@ permissions:
 on:
   pull_request:
     types: [opened, reopened, synchronize, closed]
-    branches: [develop]
+    branches: [develop, production]
     paths:
       - 'my-app/**'
       - 'kubernetes/example-a/**'
@@ -14,6 +14,23 @@ on:
       - '.github/workflows/*'
 
 jobs:
+  set-environment:
+    runs-on: ubuntu-latest
+    outputs:
+      set-env: ${{ steps.var.outputs.set-env }}
+    steps:
+      - name: set env
+        id: var
+        run: |
+          echo ${{ github.base_ref }}
+          if [[ ${{ github.base_ref }} == "develop" ]]; then
+            echo "set-env=develop" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "set-env=production" >> "$GITHUB_OUTPUT"
+      - name: check env
+        run: echo ${{ steps.var.outputs.set-env }}
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -41,8 +58,11 @@ jobs:
 
   build-image:
     runs-on: ubuntu-latest
-    environment: develop
-    needs: [ test ]
+    strategy:
+      matrix:
+        environment: ["${{ needs.set-environment.outputs.set-env }}"]
+    environment: ${{ matrix.environment }}
+    needs: [ set-environment, test ]
     if: github.event.pull_request.merged == true
     steps:
       - name: checkout the code
@@ -69,14 +89,13 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: [ build-image ]
+    needs: [ set-environment, build-image ]
     strategy:
       matrix:
-        environment: ["develop"]
+        environment: ["${{ needs.set-environment.outputs.set-env }}"]
     environment: ${{ matrix.environment }}
     steps:
-    - name: checkout the code
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
     # - name: Configure AWS Credentials
     #   id: credentials
     #   uses: aws-actions/configure-aws-credentials@v2
@@ -90,8 +109,8 @@ jobs:
     # - name: setup helm
     #   uses: azure/setup-helm@v3
     #   with:
-    #     version: v3.7.2
-    # - name: get k8s  kube-config
+    #     version: v3.7.2 
+    # - name: get k8s kube-config
     #   run: |
     #     aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER }}
     # - name: deploy kubernetes manifest Using helm
@@ -101,14 +120,34 @@ jobs:
     #     --values kubernetes/example-a/values/${{ matrix.environment }}/values.yaml \
     #     --set image.tag=${{ github.sha }}
   
+  create-pr:
+    runs-on: ubuntu-latest
+    needs: [ set-environment, deploy ]
+    if: |
+      needs.set-environment.outputs.set-env == 'develop'
+    steps:
+    - name: checkout the code
+      uses: actions/checkout@v3
+    - name: gh auth login
+      run: |
+        echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
+    - name: create branch
+      run: |
+        git checkout -b create-pr-${{ github.run_id }}
+        git push origin create-pr-${{ github.run_id }}
+    - name: Create Pull Request
+      run: |
+        gh pr create --base production --title "Create PR Develop -> Production" --body "Create PR Develop -> Production" --head create-pr-${{ github.run_id }}
+   
   slack:
     runs-on: ubuntu-latest
-    needs: [deploy]
+    needs: [set-environment, deploy]
     if: |
       always() && (needs.deploy.result == 'success' || needs.deploy.result == 'failure')
     steps:
     - name: checkout
-      run: echo "hello"
+      run: |
+        echo "hello"
     # - name: notify
     #   uses: slackapi/slack-github-action@v1.24.0
     #   with:
