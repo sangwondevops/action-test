@@ -33,7 +33,11 @@ jobs:
         run: |
           if [[ ${{ github.ref_type }} == "tag" ]]; then
             echo "set-env=qa" >> "$GITHUB_OUTPUT"
-            echo "set-tag=${{ github.base_ref }}" >> "$GITHUB_OUTPUT"
+            REF=${{ github.ref }}
+            echo "REF: $REF"
+            TAG_NAME=${REF#refs/tags/}
+            echo "TAG_NAME: $TAG_NAME"
+            echo "set-tag=$TAG_NAME" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
