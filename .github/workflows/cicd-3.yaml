@@ -33,11 +33,9 @@ jobs:
         run: |
           if [[ ${{ github.ref_type }} == "tag" ]]; then
             echo "set-env=qa" >> "$GITHUB_OUTPUT"
-            REF=${{ github.ref }}
-            echo "REF: $REF"
-            TAG_NAME=${REF#refs/tags/}
-            echo "TAG_NAME: $TAG_NAME"
-            echo "set-tag=$TAG_NAME" >> "$GITHUB_OUTPUT"
+            tag=${GITHUB_REF#refs/tags/}
+            echo "tag: $tag"
+            echo "set-tag=$tag" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -188,12 +186,12 @@ jobs:
       if: |
         steps.var.outputs.is_branch == 'false'
       run: |
-        gh pr create --base production --title "Merge PR Release branch -> Production branch  " --body "Merge PR Release -> Production" --head release/${{ steps.filter.outputs.filter-tag }}
+        gh pr create --base production --title "Merge PR Release/ branch -> Production branch  " --body "Merge PR Release -> Production" --head release/${{ steps.filter.outputs.filter-tag }}
     - name: update branch
       if: |
         steps.var.outputs.is_branch == 'true'
       run: |
-        git checkout -b release/${{ steps.filter.outputs.filter-tag }}
+        git checkout release/${{ steps.filter.outputs.filter-tag }}
         git push -f origin release/${{ steps.filter.outputs.filter-tag }}
         
   slack:
@@ -237,9 +235,6 @@ jobs:
       - name: gh auth login
         run: |
           echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
-          echo ${{ github.head_ref }}
-          echo ${GITHUB_HEAD_REF}
-          echo ${GITHUB_HEAD_REF#*/}
       - name: create release using gh cli
         run: |
           gh release create ${GITHUB_HEAD_REF#*/} --target ${GITHUB_HEAD_REF} --notes "${GITHUB_HEAD_REF#*/} Release" --generate-notes
