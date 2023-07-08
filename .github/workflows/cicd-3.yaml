@@ -232,29 +232,12 @@ jobs:
       needs.deploy.result == 'success' && needs.set-environment.outputs.set-env == 'production' &&
       contains(github.head_ref, 'release') 
     steps:
-      - name: Get tag version
-        id: get_tag
+      - name: gh auth login
         run: |
-          head_ref=${{ github.head_ref }}
-          release_version=${head_ref#*/}
-          echo "HEAD_REF: $head_ref"
-          echo "RELEASE_VERSION: $release_version"
-          echo "version=$release_version" >> $GITHUB_OUTPUT
-      - name: Create Release
-        id: create_release
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          script: |
-            const version = "${{ steps.get_tag.outputs.version }}"
-            const release = await github.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: version,
-              name: "Release " + version,
-              body: "Release for version " + version
-            })
-            return release.data.id
-      - name: Output Release URL
+          echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
+          echo ${{ github.head_ref }}
+          echo ${GITHUB_HEAD_REF}
+          echo ${GITHUB_HEAD_REF#*/}
+      - name: create release using gh cli
         run: |
-          echo "The URL for the release is https://github.com/${{ github.repository }}/releases/tag/${{ steps.get_tag.outputs.version }}"
+          gh release create ${GITHUB_HEAD_REF#*/} --target ${GITHUB_HEAD_REF} --notes "${GITHUB_HEAD_REF#*/} Release" --generate-notes
