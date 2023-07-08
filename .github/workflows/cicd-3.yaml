@@ -87,7 +87,9 @@ jobs:
         environment: ["${{ needs.set-environment.outputs.set-env }}"]
     environment: ${{ matrix.environment }}
     needs: [ set-environment, test ]
-    if: github.event.pull_request.merged == true
+    if: |
+      github.event.pull_request.merged == true ||
+      github.ref_type == 'tag'
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
