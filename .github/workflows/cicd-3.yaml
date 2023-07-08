@@ -1,4 +1,4 @@
-name: cicd-3 # Deploy develop, QA, production test 1 rc3
+name: cicd-3 # Deploy develop, QA, production test 1 v0.1.3-rc.3
 permissions:
   id-token: write
   contents: write
@@ -33,11 +33,9 @@ jobs:
         run: |
           if [[ ${{ github.ref_type }} == "tag" ]]; then
             echo "set-env=qa" >> "$GITHUB_OUTPUT"
-            REF=${{ github.ref }}
-            echo "REF: $REF"
-            TAG_NAME=${REF#refs/tags/}
-            echo "TAG_NAME: $TAG_NAME"
-            echo "set-tag=$TAG_NAME" >> "$GITHUB_OUTPUT"
+            tag=${GITHUB_REF#refs/tags/}
+            echo "tag: $tag"
+            echo "set-tag=$tag" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -188,12 +186,12 @@ jobs:
       if: |
         steps.var.outputs.is_branch == 'false'
       run: |
-        gh pr create --base production --title "Create PR Release -> Production" --body "Create PR Release -> Production" --head release/${{ steps.filter.outputs.filter-tag }}
+        gh pr create --base production --title "Merge PR Release/ branch -> Production branch  " --body "Merge PR Release -> Production" --head release/${{ steps.filter.outputs.filter-tag }}
     - name: update branch
       if: |
         steps.var.outputs.is_branch == 'true'
       run: |
-        git checkout -b release/${{ steps.filter.outputs.filter-tag }}
+        git checkout release/${{ steps.filter.outputs.filter-tag }}
         git push -f origin release/${{ steps.filter.outputs.filter-tag }}
         
   slack:
@@ -224,3 +222,19 @@ jobs:
     #   env:
     #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+  
+  create-release:
+    runs-on: ubuntu-latest
+    needs: [set-environment, deploy]
+    if: |
+      needs.deploy.result == 'success' && needs.set-environment.outputs.set-env == 'production' &&
+      contains(github.head_ref, 'release') 
+    steps: 
+      - name: checkout the code
+        uses: actions/checkout@v3
+      - name: gh auth login
+        run: |
+          echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
+      - name: create release using gh cli
+        run: |
+          gh release create ${GITHUB_HEAD_REF#*/} --target ${GITHUB_HEAD_REF} --notes "${GITHUB_HEAD_REF#*/} Release" --generate-notes
