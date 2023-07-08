@@ -156,43 +156,43 @@ jobs:
     - name: gh auth login
       run: |
         echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
-    - name: tag filter
-      id: filter
+    - name: extract tag
+      id: extract
       run: |
         tag=${{ needs.set-environment.outputs.set-tag }}
         tag=${tag%-*}
         echo $tag
-        echo "filter-tag=$tag" >> $GITHUB_OUTPUT
+        echo "extract-tag=$tag" >> $GITHUB_OUTPUT
     - name: check release branch exist
       id: var
       run: |
-        branch=$(gh pr list -s open -H release/${{ steps.filter.outputs.filter-tag }} --json headRefName | jq '.[] | .headRefName')
+        branch=$(gh pr list -s open -H release/${{ steps.extract.outputs.extract-tag }} --json headRefName | jq '.[] | .headRefName')
         echo "branch: ${branch}"
         echo "is_branch=false" >> $GITHUB_OUTPUT
-        if [[ ${branch} == *"release/${{ steps.filter.outputs.filter-tag }}"* ]]; then
+        if [[ ${branch} == *"release/${{ steps.extract.outputs.extract-tag }}"* ]]; then
           echo "is_branch=true" >> $GITHUB_OUTPUT
         fi
     - name: check output 1
       run: |
         echo ${{ steps.var.outputs.is_branch }}
-        echo ${{ steps.filter.outputs.filter-tag }}
+        echo ${{ steps.extract.outputs.extract-tag }}
     - name: create branch
       if: |
         steps.var.outputs.is_branch == 'false'
       run: |
-        git checkout -b release/${{ steps.filter.outputs.filter-tag }}
-        git push origin release/${{ steps.filter.outputs.filter-tag }}
+        git checkout -b release/${{ steps.extract.outputs.extract-tag }}
+        git push origin release/${{ steps.extract.outputs.extract-tag }}
     - name: Create Pull Request
       if: |
         steps.var.outputs.is_branch == 'false'
       run: |
-        gh pr create --base production --title "Merge PR Release/ branch -> Production branch  " --body "Merge PR Release -> Production" --head release/${{ steps.filter.outputs.filter-tag }}
+        gh pr create --base production --title "Merge PR Release/ branch -> Production branch  " --body "Merge PR Release -> Production" --head release/${{ steps.extract.outputs.extract-tag }}
     - name: update branch
       if: |
         steps.var.outputs.is_branch == 'true'
       run: |
-        git checkout release/${{ steps.filter.outputs.filter-tag }}
-        git push -f origin release/${{ steps.filter.outputs.filter-tag }}
+        git checkout -b release/${{ steps.extract.outputs.extract-tag }}
+        git push -f origin release/${{ steps.extract.outputs.extract-tag }}
         
   slack:
     runs-on: ubuntu-latest
