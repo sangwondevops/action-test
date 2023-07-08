@@ -229,7 +229,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [set-environment, deploy]
     if: |
-      needs.deploy.result == 'success' && needs.set-environment.outputs.set-env == 'production'
+      needs.deploy.result == 'success' && needs.set-environment.outputs.set-env == 'production' &&
       contains(github.head_ref, 'release') 
     steps:
       - name: Get tag version
