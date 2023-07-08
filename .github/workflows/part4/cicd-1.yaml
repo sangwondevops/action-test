@@ -11,6 +11,7 @@ on:
       - 'my-app/**'
       - 'kubernetes/example-a/**'
       - '*.txt'
+      - '.github/workflows/*'
 
 jobs:
   test:
@@ -18,25 +19,25 @@ jobs:
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
-      - name: setup-node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - name: Cache Node.js modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-      - name: Install dependencies
-        run: |
-          cd my-app
-          npm ci
-      - name: npm build
-        run: |
-          cd my-app
-          npm run build
+      # - name: setup-node
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: 18
+      # - name: Cache Node.js modules
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ~/.npm
+      #     key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-node-
+      # - name: Install dependencies
+      #   run: |
+      #     cd my-app
+      #     npm ci
+      # - name: npm build
+      #   run: |
+      #     cd my-app
+      #     npm run build
 
   build-image:
     runs-on: ubuntu-latest
@@ -46,25 +47,25 @@ jobs:
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
-      - name: Configure AWS Credentials
-        id: credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-      - name: docker build & push
-        run: |
-          docker build -f Dockerfile . \
-          --tag ${{ env.registry }}/${{ env.repository }}:latest \
-          --tag ${{ env.registry }}/${{ env.repository }}:${{ github.sha }}
-          docker push ${{ env.registry }}/${{ env.repository }}:latest
-          docker push ${{ env.registry }}/${{ env.repository }}:${{ github.sha }}
-        env:
-          repository: ${{ secrets.ECR_REPOSITORY }}
-          registry: ${{ secrets.ECR_REGISTRY }}
+      # - name: Configure AWS Credentials
+      #   id: credentials
+      #   uses: aws-actions/configure-aws-credentials@v2
+      #   with:
+      #     aws-region: ${{ vars.AWS_REGION }}
+      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+      # - name: Login to Amazon ECR
+      #   id: login-ecr
+      #   uses: aws-actions/amazon-ecr-login@v1
+      # - name: docker build & push
+      #   run: |
+      #     docker build -f Dockerfile . \
+      #     --tag ${{ env.registry }}/${{ env.repository }}:latest \
+      #     --tag ${{ env.registry }}/${{ env.repository }}:${{ github.sha }}
+      #     docker push ${{ env.registry }}/${{ env.repository }}:latest
+      #     docker push ${{ env.registry }}/${{ env.repository }}:${{ github.sha }}
+      #   env:
+      #     repository: ${{ secrets.ECR_REPOSITORY }}
+      #     registry: ${{ secrets.ECR_REGISTRY }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -73,57 +74,57 @@ jobs:
       matrix:
         environment: ["develop"]
     environment: ${{ matrix.environment }}
-    if: github.event.pull_request.merged == true
     steps:
     - name: checkout the code
       uses: actions/checkout@v3
-    - name: Configure AWS Credentials
-      id: credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-region: ${{ vars.AWS_REGION }}
-        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-    - name: setup kubectl
-      uses: azure/setup-kubectl@v3
-      with:
-        version: v1.25.0
-    - name: setup helm
-      uses: azure/setup-helm@v3
-      with:
-        version: v3.7.2
-    - name: get k8s  kube-config
-      run: |
-        aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER }}
-    - name: deploy kubernetes manifest Using helm
-      run: |
-        helm upgrade --install example-a kubernetes/example-a --create-namespace --namespace example-a-${{ matrix.environment }} --wait --atomic \
-        --timeout 15m \
-        --values kubernetes/example-a/values/${{ matrix.environment }}/values.yaml \
-        --set image.tag=${{ github.sha }}
+    # - name: Configure AWS Credentials
+    #   id: credentials
+    #   uses: aws-actions/configure-aws-credentials@v2
+    #   with:
+    #     aws-region: ${{ vars.AWS_REGION }}
+    #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+    # - name: setup kubectl
+    #   uses: azure/setup-kubectl@v3
+    #   with:
+    #     version: v1.25.0
+    # - name: setup helm
+    #   uses: azure/setup-helm@v3
+    #   with:
+    #     version: v3.7.2
+    # - name: get k8s  kube-config
+    #   run: |
+    #     aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER }}
+    # - name: deploy kubernetes manifest Using helm
+    #   run: |
+    #     helm upgrade --install example-a kubernetes/example-a --create-namespace --namespace example-a-${{ matrix.environment }} --wait --atomic \
+    #     --timeout 15m \
+    #     --values kubernetes/example-a/values/${{ matrix.environment }}/values.yaml \
+    #     --set image.tag=${{ github.sha }}
   
   slack:
     runs-on: ubuntu-latest
     needs: [deploy]
     if: |
       always() && (needs.deploy.result == 'success' || needs.deploy.result == 'failure')
-      && github.event.pull_request.merged == true
     steps:
-    - name: notify
-      uses: slackapi/slack-github-action@v1.24.0
-      with:
-        payload: |
-          {
-            "text": "Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}.",
-            "blocks": [
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}."
-                }
-              }
-            ]
-          }
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+    - name: checkout
+      run: echo "hello"
+    # - name: notify
+    #   uses: slackapi/slack-github-action@v1.24.0
+    #   with:
+    #     payload: |
+    #       {
+    #         "text": "Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}.",
+    #         "blocks": [
+    #           {
+    #             "type": "section",
+    #             "text": {
+    #               "type": "mrkdwn",
+    #               "text": "Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}."
+    #             }
+    #           }
+    #         ]
+    #       }
+    #   env:
+    #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
