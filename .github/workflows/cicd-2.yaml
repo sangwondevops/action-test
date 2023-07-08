@@ -22,8 +22,8 @@ jobs:
       - name: set env
         id: var
         run: |
-          echo ${{ github.head_ref }}
-          if [[ ${{ github.head_ref }} == "develop" ]]; then
+          echo ${{ github.base_ref }}
+          if [[ ${{ github.base_ref }} == "develop" ]]; then
             echo "set-env=develop" >> "$GITHUB_OUTPUT"
             exit 0
           fi
