@@ -5,18 +5,21 @@ permissions:
   pull-requests: write
 on:
   push:
-    branches: [develop, production]
     paths:
       - 'my-app/**'
       - 'kubernetes/example-a/**'
+      - '*.txt'
+      - '.github/workflows/*'
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
   pull_request:
-    types: [opened, reopened, synchronize]
+    types: [opened, reopened, synchronize, closed]
     branches: [develop, production]
     paths:
       - 'my-app/**'
       - 'kubernetes/example-a/**'
+      - '*.txt'
+      - '.github/workflows/*'
 
 jobs:
   set-environment:
@@ -30,15 +33,15 @@ jobs:
         run: |
           if [[ ${{ github.ref_type }} == "tag" ]]; then
             echo "set-env=qa" >> "$GITHUB_OUTPUT"
-            echo "set-tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+            echo "set-tag=${{ github.base_ref }}" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           if [[ ${{ github.ref_type }} == "branch" ]]; then
-            if [[ ${{ github.ref_name }} == "develop" ]]; then
+            if [[ ${{ github.base_ref }} == "develop" ]]; then
               echo "set-env=develop" >> "$GITHUB_OUTPUT"
               exit 0
-            elif [[ ${{ github.ref_name }} == "production" ]]; then
+            elif [[ ${{ github.base_ref }} == "production" ]]; then
               echo "set-env=production" >> "$GITHUB_OUTPUT"
               exit 0
             fi
