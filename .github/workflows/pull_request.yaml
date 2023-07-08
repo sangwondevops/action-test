@@ -1,16 +1,16 @@
-name: pull_request
-on: pull_request
+# name: pull_request
+# on: pull_request
 
-jobs:
-  pull_request:
-    runs-on: ubuntu-latest
-    steps:
-      - name: step1 echo hello world
-        run: echo Hello, world!
-      - name: step2 echo github action
-        run: |
-          echo Hello, world!
-          echo github action !
+# jobs:
+#   pull_request:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: step1 echo hello world
+#         run: echo Hello, world!
+#       - name: step2 echo github action
+#         run: |
+#           echo Hello, world!
+#           echo github action !
 
 
 # name: pull_request open
@@ -30,19 +30,19 @@ jobs:
 #           echo Hello, world!
 #           echo github action !
 
-# name: merge
-# on:
-#   pull_request:
-#     types: [closed]
+name: merge
+on:
+  pull_request:
+    types: [closed]
 
-# jobs:
-#   merge:
-#     if: github.event.pull_request.merged == true
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: step1 echo hello world
-#         run: echo Hello, world!
-#       - name: step2 echo github action
-#         run: |
-#           echo Hello, world!
-#           echo github action !
+jobs:
+  merge:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: step1 echo hello world
+        run: echo Hello, world!
+      - name: step2 echo github action
+        run: |
+          echo Hello, world!
+          echo github action !
