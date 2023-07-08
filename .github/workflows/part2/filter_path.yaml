@@ -2,7 +2,6 @@ name: filter
 
 on:
   pull_request:
-    types: [ opened, synchronize, reopened ]
     paths:
       - 'filter/pr/*.txt'
       - '!filter/pr/basic.txt'
