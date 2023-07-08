@@ -10,7 +10,7 @@ on:
     paths:
       - 'my-app/**'
       - 'kubernetes/example-a/**'
-      - 'test.txt'
+      - '*.txt'
 
 jobs:
   test:
