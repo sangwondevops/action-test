@@ -4,17 +4,13 @@ permissions:
   contents: write
   pull-requests: write
 on:
-  push:
-    branches: [develop]
-    paths:
-      - 'my-app/**'
-      - 'kubernetes/example-a/**'
   pull_request:
-    types: [opened, reopened, synchronize]
+    types: [opened, reopened, synchronize, closed]
     branches: [develop]
     paths:
       - 'my-app/**'
       - 'kubernetes/example-a/**'
+      - 'test.txt'
 
 jobs:
   test:
@@ -43,6 +39,7 @@ jobs:
           npm run build
 
   build-image:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     environment: develop
     needs: [ test ]
@@ -72,6 +69,7 @@ jobs:
           registry: ${{ secrets.ECR_REGISTRY }}
 
   deploy:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     needs: [ build-image ]
     strategy:
@@ -108,7 +106,9 @@ jobs:
   slack:
     runs-on: ubuntu-latest
     needs: [deploy]
-    if: always() && (needs.deploy.result == 'success' || needs.deploy.result == 'failure')
+    if: |
+      always() && (needs.deploy.result == 'success' || needs.deploy.result == 'failure')
+      && github.event.pull_request.merged == true
     steps:
     - name: notify
       uses: slackapi/slack-github-action@v1.24.0
