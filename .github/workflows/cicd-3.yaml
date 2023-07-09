@@ -1,4 +1,4 @@
-name: cicd-3 # Deploy develop, QA, production v0.1.10-rc.2
+name: cicd-3 # Deploy develop, QA, production v0.1.10-rc.3
 permissions:
   id-token: write
   contents: write
