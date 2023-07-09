@@ -1,4 +1,4 @@
-name: cicd-3 # Deploy develop, QA, production / cicd v0.1.6-rc.2
+name: cicd-3 # Deploy develop, QA, production v0.1.13-rc.3
 permissions:
   id-token: write
   contents: write
@@ -153,6 +153,8 @@ jobs:
     steps:
     - name: checkout the code
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     - name: gh auth login
       run: |
         echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
@@ -186,13 +188,16 @@ jobs:
       if: |
         steps.var.outputs.is_branch == 'false'
       run: |
-        gh pr create --base production --title "Merge PR Release/ branch -> Production branch  " --body "Merge PR Release -> Production" --head release/${{ steps.extract.outputs.extract-tag }}
+        gh pr create --base production --title "Merge PR Release/${{ steps.extract.outputs.extract-tag }} branch -> Production branch  " --body "Merge PR Release/${{ steps.extract.outputs.extract-tag }} -> Production" --head release/${{ steps.extract.outputs.extract-tag }}
     - name: update branch
       if: |
         steps.var.outputs.is_branch == 'true'
       run: |
-        git checkout -b release/${{ steps.extract.outputs.extract-tag }}
-        git push -f origin release/${{ steps.extract.outputs.extract-tag }}
+        echo "extract-tag: ${{ steps.extract.outputs.extract-tag }}"
+        echo "github-sha: ${{ github.sha }}"
+        git checkout release/${{ steps.extract.outputs.extract-tag }}
+        git merge ${{ github.sha }}
+        git push origin release/${{ steps.extract.outputs.extract-tag }}
         
   slack:
     runs-on: ubuntu-latest
