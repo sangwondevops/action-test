@@ -1,4 +1,4 @@
-name: cicd-3 # Deploy develop, QA, production v0.1.10-rc.3
+name: cicd-3 # Deploy develop, QA, production v0.1.11-rc.1
 permissions:
   id-token: write
   contents: write
@@ -153,6 +153,8 @@ jobs:
     steps:
     - name: checkout the code
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     - name: gh auth login
       run: |
         echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
