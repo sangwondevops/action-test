@@ -5,18 +5,21 @@ permissions:
   pull-requests: write
 on:
   push:
-    branches: [develop, production]
     paths:
       - 'my-app/**'
       - 'kubernetes/example-a/**'
+      - '*.txt'
+      - '.github/workflows/*'
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
   pull_request:
-    types: [opened, reopened, synchronize]
+    types: [opened, reopened, synchronize, closed]
     branches: [develop, production]
     paths:
       - 'my-app/**'
       - 'kubernetes/example-a/**'
+      - '*.txt'
+      - '.github/workflows/*'
 
 jobs:
   set-environment:
@@ -63,7 +66,8 @@ jobs:
     environment: ${{ matrix.environment }}
     needs: [ set-environment, test ]
     if: |
-      (github.event_name == 'push')
+      github.event.pull_request.merged == true ||
+      github.ref_type == 'tag'
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
@@ -134,6 +138,8 @@ jobs:
   slack:
     runs-on: ubuntu-latest
     needs: [set-environment, deploy]
+    if: |
+      always() && ( needs.deploy.result == 'success' || needs.deploy.result == 'failure' ) 
     steps:
     - name: fetch actions repo
       uses: actions/checkout@v3
@@ -161,7 +167,7 @@ jobs:
   approve:
     runs-on: ubuntu-latest
     environment: approve
-    needs: [ set-environment, deploy, slack ]
+    needs: [ set-environment, deploy ]
     if: |
       needs.set-environment.outputs.set-env == 'staging'
     steps:
@@ -211,3 +217,18 @@ jobs:
     #     ENVIRONMENT: production
     #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
   
+  create-release:
+    runs-on: ubuntu-latest
+    needs: [prod-deploy]
+    steps: 
+      - name: checkout the code
+        uses: actions/checkout@v3
+      - name: fetch actions repo
+        uses: actions/checkout@v3
+        with:
+          repository: "sangwondevops/action-module"
+          path: ./action-module
+      - name: create-release
+        uses: ./action-module/common/create-release
+        with:
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }} 
