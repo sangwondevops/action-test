@@ -85,21 +85,21 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ inputs.set_branch }}
-      - name: fetch actions repo
-        uses: actions/checkout@v3
-        with:
-          repository: "sangwondevops/action-module"
-          path: ./action-module
-          ref: ${{ vars.REF }}
-      - name: use aws credentials module
-        uses: ./action-module/common/aws/credentials
-        with:
-          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      - name: use docker image module
-        uses: ./action-module/common/docker/image
-        with:
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }} 
-          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }} 
+      # - name: fetch actions repo
+      #   uses: actions/checkout@v3
+      #   with:
+      #     repository: "sangwondevops/action-module"
+      #     path: ./action-module
+      #     ref: ${{ vars.REF }}
+      # - name: use aws credentials module
+      #   uses: ./action-module/common/aws/credentials
+      #   with:
+      #     AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      # - name: use docker image module
+      #   uses: ./action-module/common/docker/image
+      #   with:
+      #     ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }} 
+      #     ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }} 
                  
   deploy:
     runs-on: ubuntu-latest
@@ -112,24 +112,24 @@ jobs:
     - uses: actions/checkout@v3
       with:
         ref: ${{ inputs.set_branch }}
-    - name: fetch actions repo
-      uses: actions/checkout@v3
-      with:
-        repository: "sangwondevops/action-module"
-        path: ./action-module
-        ref: ${{ vars.REF }}
-    - name: use aws credentials module
-      uses: ./action-module/common/aws/credentials
-      with:
-        AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-    - name: use deploy kubernetes module
-      uses: ./action-module/common/deploy/kubernetes
-      with:
-        EKS_CLUSTER: ${{ secrets.EKS_CLUSTER }} 
-        RELEASE_NAME: example-a
-        HELM_CHART_PATH: kubernetes/example-a
-        NAMESPACE: example-a-${{ matrix.environment }}
-        VALUES_PATH: ${{ vars.VALUES_PATH }}
+    # - name: fetch actions repo
+    #   uses: actions/checkout@v3
+    #   with:
+    #     repository: "sangwondevops/action-module"
+    #     path: ./action-module
+    #     ref: ${{ vars.REF }}
+    # - name: use aws credentials module
+    #   uses: ./action-module/common/aws/credentials
+    #   with:
+    #     AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+    # - name: use deploy kubernetes module
+    #   uses: ./action-module/common/deploy/kubernetes
+    #   with:
+    #     EKS_CLUSTER: ${{ secrets.EKS_CLUSTER }} 
+    #     RELEASE_NAME: example-a
+    #     HELM_CHART_PATH: kubernetes/example-a
+    #     NAMESPACE: example-a-${{ matrix.environment }}
+    #     VALUES_PATH: ${{ vars.VALUES_PATH }}
   
   slack:
     runs-on: ubuntu-latest
@@ -139,26 +139,26 @@ jobs:
     steps:
     - name: fetch actions repo
       uses: actions/checkout@v3
-      with:
-        repository: "sangwondevops/action-module"
-        path: ./action-module
-        ref: ${{ vars.REF }}
-    - name: use slack approve module (staging)
-      if: |
-        needs.set-environment.outputs.set-env == 'staging'
-      uses: ./action-module/common/slack/approve
-      with:
-        DEPLOY_JOB_STATUS: ${{ needs.deploy.result }}
-        ENVIRONMENT: ${{ needs.set-environment.outputs.set-env }}
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-    - name: use slack module (dev,qa)
-      if: |
-        needs.set-environment.outputs.set-env != 'staging'
-      uses: ./action-module/common/slack
-      with:
-        DEPLOY_JOB_STATUS: ${{ needs.deploy.result }}
-        ENVIRONMENT: ${{ needs.set-environment.outputs.set-env }}
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    #   with:
+    #     repository: "sangwondevops/action-module"
+    #     path: ./action-module
+    #     ref: ${{ vars.REF }}
+    # - name: use slack approve module (staging)
+    #   if: |
+    #     needs.set-environment.outputs.set-env == 'staging'
+    #   uses: ./action-module/common/slack/approve
+    #   with:
+    #     DEPLOY_JOB_STATUS: ${{ needs.deploy.result }}
+    #     ENVIRONMENT: ${{ needs.set-environment.outputs.set-env }}
+    #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    # - name: use slack module (dev,qa)
+    #   if: |
+    #     needs.set-environment.outputs.set-env != 'staging'
+    #   uses: ./action-module/common/slack
+    #   with:
+    #     DEPLOY_JOB_STATUS: ${{ needs.deploy.result }}
+    #     ENVIRONMENT: ${{ needs.set-environment.outputs.set-env }}
+    #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   approve:
     runs-on: ubuntu-latest
