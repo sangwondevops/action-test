@@ -191,10 +191,11 @@ jobs:
       if: |
         steps.var.outputs.is_branch == 'true'
       run: |
-        echo "tag: ${{ steps.extract.outputs.extract-tag }}"
+        echo "extract-tag: ${{ steps.extract.outputs.extract-tag }}"
+        echo "set-tag: ${{ needs.set-environment.outputs.set-tag }}"
         git fetch origin 
         git checkout release/${{ steps.extract.outputs.extract-tag }}
-        git merge tags/${{ steps.extract.outputs.extract-tag }}
+        git merge tags/${{ needs.set-environment.outputs.set-tag }}
         git push origin release/${{ steps.extract.outputs.extract-tag }}
         
   slack:
