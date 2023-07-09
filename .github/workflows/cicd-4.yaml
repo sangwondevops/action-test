@@ -186,8 +186,7 @@ jobs:
       if: |
         steps.var.outputs.is_branch == 'false'
       run: |
-        gh pr create --base production --title "Merge PR Release/ branch -> Production branch  " --body "Merge PR Release -> Production" --head release/${{ steps.extract.outputs.extract-tag }}
-    - name: update branch
+        gh pr create --base production --title "Merge PR Release/${{ steps.extract.outputs.extract-tag }} branch -> Production branch  " --body "Merge PR Release/${{ steps.extract.outputs.extract-tag }} -> Production" --head release/${{ steps.extract.outputs.extract-tag }}
       if: |
         steps.var.outputs.is_branch == 'true'
       run: |
