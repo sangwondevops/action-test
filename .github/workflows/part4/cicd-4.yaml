@@ -5,18 +5,21 @@ permissions:
   pull-requests: write
 on:
   push:
-    branches: [develop, production]
     paths:
       - 'my-app/**'
       - 'kubernetes/example-a/**'
+      - '*.txt'
+      - '.github/workflows/*'
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
   pull_request:
-    types: [opened, reopened, synchronize]
+    types: [opened, reopened, synchronize, closed]
     branches: [develop, production]
     paths:
       - 'my-app/**'
       - 'kubernetes/example-a/**'
+      - '*.txt'
+      - '.github/workflows/*'
 
 jobs:
   set-environment:
@@ -30,16 +33,18 @@ jobs:
         run: |
           if [[ ${{ github.ref_type }} == "tag" ]]; then
             echo "set-env=qa" >> "$GITHUB_OUTPUT"
-            echo "set-tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+            tag=${GITHUB_REF#refs/tags/}
+            echo "tag: $tag"
+            echo "set-tag=$tag" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           if [[ ${{ github.ref_type }} == "branch" ]]; then
-            if [[ ${{ github.ref_name }} == "develop" ]]; then
+            if [[ ${{ github.base_ref }} == "develop" ]]; then
               echo "set-env=develop" >> "$GITHUB_OUTPUT"
               exit 0
-            elif [[ ${{ github.ref_name }} == "production" ]]; then
-              echo "set-env=staging" >> "$GITHUB_OUTPUT"
+            elif [[ ${{ github.base_ref }} == "production" ]]; then
+              echo "set-env=production" >> "$GITHUB_OUTPUT"
               exit 0
             fi
           fi
@@ -47,30 +52,31 @@ jobs:
         run: |
           echo ${{ steps.var.outputs.set-env }}
           echo ${{ steps.var.outputs.set-tag }}
+          
   test:
     runs-on: ubuntu-latest
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
-      - name: checkout the code
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - name: Cache Node.js modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-      - name: Install dependencies
-        run: |
-          cd my-app
-          npm ci
-      - name: npm build
-        run: |
-          cd my-app
-          npm run build
+      # - name: checkout the code
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: 18
+      # - name: Cache Node.js modules
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ~/.npm
+      #     key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-node-
+      # - name: Install dependencies
+      #   run: |
+      #     cd my-app
+      #     npm ci
+      # - name: npm build
+      #   run: |
+      #     cd my-app
+      #     npm run build
 
   build-image:
     runs-on: ubuntu-latest
@@ -80,29 +86,30 @@ jobs:
     environment: ${{ matrix.environment }}
     needs: [ set-environment, test ]
     if: |
-      (github.event_name == 'push')
+      github.event.pull_request.merged == true ||
+      github.ref_type == 'tag'
     steps:
       - name: checkout the code
         uses: actions/checkout@v3
-      - name: Configure AWS Credentials
-        id: credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-      - name: docker build & push
-        run: |
-          docker build -f Dockerfile . \
-          --tag ${{ env.registry }}/${{ env.repository }}:latest \
-          --tag ${{ env.registry }}/${{ env.repository }}:${{ github.sha }}
-          docker push ${{ env.registry }}/${{ env.repository }}:latest
-          docker push ${{ env.registry }}/${{ env.repository }}:${{ github.sha }}
-        env:
-          repository: ${{ secrets.ECR_REPOSITORY }}
-          registry: ${{ secrets.ECR_REGISTRY }}
+      # - name: Configure AWS Credentials
+      #   id: credentials
+      #   uses: aws-actions/configure-aws-credentials@v2
+      #   with:
+      #     aws-region: ${{ vars.AWS_REGION }}
+      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+      # - name: Login to Amazon ECR
+      #   id: login-ecr
+      #   uses: aws-actions/amazon-ecr-login@v1
+      # - name: docker build & push
+      #   run: |
+      #     docker build -f Dockerfile . \
+      #     --tag ${{ env.registry }}/${{ env.repository }}:latest \
+      #     --tag ${{ env.registry }}/${{ env.repository }}:${{ github.sha }}
+      #     docker push ${{ env.registry }}/${{ env.repository }}:latest
+      #     docker push ${{ env.registry }}/${{ env.repository }}:${{ github.sha }}
+      #   env:
+      #     repository: ${{ secrets.ECR_REPOSITORY }}
+      #     registry: ${{ secrets.ECR_REGISTRY }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -114,139 +121,144 @@ jobs:
     steps:
     - name: checkout the code
       uses: actions/checkout@v3
-    - name: Configure AWS Credentials
-      id: credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-region: ${{ vars.AWS_REGION }}
-        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-    - name: setup kubectl
-      uses: azure/setup-kubectl@v3
-      with:
-        version: v1.25.0
-    - name: setup helm
-      uses: azure/setup-helm@v3
-      with:
-        version: v3.7.2 
-    - name: get k8s kube-config
-      run: |
-        aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER }}
-    - name: deploy kubernetes manifest Using helm
-      run: |
-        helm upgrade --install example-a kubernetes/example-a --create-namespace --namespace example-a-${{ matrix.environment }} --wait --atomic \
-        --timeout 15m \
-        --values kubernetes/example-a/values/${{ matrix.environment }}/values.yaml \
-        --set image.tag=${{ github.sha }}
+    # - name: Configure AWS Credentials
+    #   id: credentials
+    #   uses: aws-actions/configure-aws-credentials@v2
+    #   with:
+    #     aws-region: ${{ vars.AWS_REGION }}
+    #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+    # - name: setup kubectl
+    #   uses: azure/setup-kubectl@v3
+    #   with:
+    #     version: v1.25.0
+    # - name: setup helm
+    #   uses: azure/setup-helm@v3
+    #   with:
+    #     version: v3.7.2 
+    # - name: get k8s kube-config
+    #   run: |
+    #     aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER }}
+    # - name: deploy kubernetes manifest Using helm
+    #   run: |
+    #     helm upgrade --install example-a kubernetes/example-a --create-namespace --namespace example-a-${{ matrix.environment }} --wait --atomic \
+    #     --timeout 15m \
+    #     --values kubernetes/example-a/values/${{ matrix.environment }}/values.yaml \
+    #     --set image.tag=${{ github.sha }}
   
   create-pr:
     runs-on: ubuntu-latest
     needs: [ set-environment, deploy ]
     if: |
-      needs.set-environment.outputs.set-env == 'qa'
+      needs.set-environment.outputs.set-env == 'qa' 
     steps:
     - name: checkout the code
       uses: actions/checkout@v3
     - name: gh auth login
       run: |
         echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
-    - name: tag filter
-      id: filter
+    - name: extract tag
+      id: extract
       run: |
         tag=${{ needs.set-environment.outputs.set-tag }}
         tag=${tag%-*}
         echo $tag
-        echo "filter-tag=$tag" >> $GITHUB_OUTPUT
+        echo "extract-tag=$tag" >> $GITHUB_OUTPUT
     - name: check release branch exist
       id: var
       run: |
-        branch=$(gh pr list -s open -H release/${{ steps.filter.outputs.filter-tag }} --json headRefName | jq '.[] | .headRefName')
+        branch=$(gh pr list -s open -H release/${{ steps.extract.outputs.extract-tag }} --json headRefName | jq '.[] | .headRefName')
         echo "branch: ${branch}"
         echo "is_branch=false" >> $GITHUB_OUTPUT
-        if [[ ${branch} == *"release/${{ steps.filter.outputs.filter-tag }}"* ]]; then
+        if [[ ${branch} == *"release/${{ steps.extract.outputs.extract-tag }}"* ]]; then
           echo "is_branch=true" >> $GITHUB_OUTPUT
         fi
     - name: check output 1
       run: |
         echo ${{ steps.var.outputs.is_branch }}
-        echo ${{ steps.filter.outputs.filter-tag }}
+        echo ${{ steps.extract.outputs.extract-tag }}
     - name: create branch
       if: |
         steps.var.outputs.is_branch == 'false'
       run: |
-        git checkout -b release/${{ steps.filter.outputs.filter-tag }}
-        git push origin release/${{ steps.filter.outputs.filter-tag }}
+        git checkout -b release/${{ steps.extract.outputs.extract-tag }}
+        git push origin release/${{ steps.extract.outputs.extract-tag }}
     - name: Create Pull Request
       if: |
         steps.var.outputs.is_branch == 'false'
       run: |
-        gh pr create --base production --title "Create PR Release -> Production" --body "Create PR Release -> Production" --head release/${{ steps.filter.outputs.filter-tag }}
+        gh pr create --base production --title "Merge PR Release/ branch -> Production branch  " --body "Merge PR Release -> Production" --head release/${{ steps.extract.outputs.extract-tag }}
     - name: update branch
       if: |
         steps.var.outputs.is_branch == 'true'
       run: |
-        git checkout -b release/${{ steps.filter.outputs.filter-tag }}
-        git push -f origin release/${{ steps.filter.outputs.filter-tag }}
+        git checkout -b release/${{ steps.extract.outputs.extract-tag }}
+        git push -f origin release/${{ steps.extract.outputs.extract-tag }}
   
   slack:
     runs-on: ubuntu-latest
     needs: [set-environment, deploy]
     if: |
-      always() && (needs.deploy.result == 'success' || needs.deploy.result == 'failure')
+      always() && ( needs.deploy.result == 'success' || needs.deploy.result == 'failure' ) 
     steps:
-    - name: notify
-      uses: slackapi/slack-github-action@v1.24.0
-      if: |
-        needs.set-environment.outputs.set-env == 'staging'
-      with:
-        payload: |
-          {
-            "text": "Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}.",
-            "blocks": [
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}."
-                }
-              },
-              {
-                "type": "actions",
-                "elements": [
-                  {
-                  "type": "button",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "Approve for prod deploy"
-                  },
-                  "url" : "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                  }
-                ]
-              }
-            ]
-          }
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-    - name: notify
-      uses: slackapi/slack-github-action@v1.24.0
-      if: needs.set-environment.outputs.set-env != 'staging'
-      with:
-        payload: |
-          {
-            "text": "Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}.",
-            "blocks": [
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}."
-                }
-              }
-            ]
-          }
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+    - name: checkout
+      run: |
+        echo "hello"
+    # - name: notify
+    #   uses: slackapi/slack-github-action@v1.24.0
+    #   if: |
+    #     needs.set-environment.outputs.set-env == 'staging' &&
+    #     needs.deploy.result == 'success'
+    #   with:
+    #     payload: |
+    #       {
+    #         "text": "Environment : ${{ needs.set-environment.outputs.set-env }}, Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}.",
+    #         "blocks": [
+    #           {
+    #             "type": "section",
+    #             "text": {
+    #               "type": "mrkdwn",
+    #               "text": "Environment : ${{ needs.set-environment.outputs.set-env }}, Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}."
+    #             }
+    #           },
+    #           {
+    #             "type": "actions",
+    #             "elements": [
+    #               {
+    #               "type": "button",
+    #               "text": {
+    #                 "type": "plain_text",
+    #                 "text": "Approve for prod deploy"
+    #               },
+    #               "url" : "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+    #               }
+    #             ]
+    #           }
+    #         ]
+    #       }
+    #   env:
+    #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+    # - name: notify
+    #   uses: slackapi/slack-github-action@v1.24.0
+    #   if: |
+    #     needs.set-environment.outputs.set-env != 'staging' 
+    #   with:
+    #     payload: |
+    #       {
+    #         "text": "Environment : ${{ needs.set-environment.outputs.set-env }}, Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}.",
+    #         "blocks": [
+    #           {
+    #             "type": "section",
+    #             "text": {
+    #               "type": "mrkdwn",
+    #               "text": "Environment : ${{ needs.set-environment.outputs.set-env }}, Deploy Result: ${{ needs.deploy.result }} in environment: ${{ needs.set-environment.outputs.set-env }}, repository: ${{ github.repository }}."
+    #             }
+    #           }
+    #         ]
+    #       }
+    #   env:
+    #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
   approve:
     runs-on: ubuntu-latest
@@ -269,52 +281,65 @@ jobs:
     steps:
     - name: checkout the code
       uses: actions/checkout@v3
-    - name: fetch actions repo
-      uses: actions/checkout@v3
-      with:
-        repository: "devopssangwon/action-module"
-        path: "./action-module"
-        ref: master
-    - name: aws credentials
-      uses: "./action-module/credentials/aws"
-      with:
-        role-arn: ${{ secrets.AWS_ROLE_ARN }}
-    - name: setup-kubectl
-      uses: azure/setup-kubectl@v1
-      with:
-        version: v1.25.0
-    - name: setup-helm
-      uses: azure/setup-helm@v1
-      with:
-        version: v3.7.2 
-    - name: get k8s  kube-config
-      run: |
-        aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER }}
-    - name: deploy kubernetes manifest Using helm
-      run: |
-        helm upgrade --install example-a kubernetes/example-a --create-namespace --namespace example-a-${{ matrix.environment }} --wait --atomic \
-        --timeout 15m \
-        --values kubernetes/example-a/values/${{ matrix.environment }}/values.yaml \
-        --set image.tag=${{ github.sha }}
-    - name: notify
-      uses: slackapi/slack-github-action@v1.24.0
-      if: always()
-      with:
-        payload: |
-          {
-            "text": "Deploy Result: ${{ needs.deploy.result }} in environment: production, repository: ${{ github.repository }}.",
-            "blocks": [
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "Deploy Result: ${{ needs.deploy.result }} in environment: production, repository: ${{ github.repository }}."
-                }
-              }
-            ]
-          }
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+    # - name: fetch actions repo
+    #   uses: actions/checkout@v3
+    #   with:
+    #     repository: "devopssangwon/action-module"
+    #     path: "./action-module"
+    #     ref: master
+    # - name: aws credentials
+    #   uses: "./action-module/credentials/aws"
+    #   with:
+    #     role-arn: ${{ secrets.AWS_ROLE_ARN }}
+    # - name: setup-kubectl
+    #   uses: azure/setup-kubectl@v1
+    #   with:
+    #     version: v1.25.0
+    # - name: setup-helm
+    #   uses: azure/setup-helm@v1
+    #   with:
+    #     version: v3.7.2 
+    # - name: get k8s  kube-config
+    #   run: |
+    #     aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER }}
+    # - name: deploy kubernetes manifest Using helm
+    #   run: |
+    #     helm upgrade --install example-a kubernetes/example-a --create-namespace --namespace example-a-${{ matrix.environment }} --wait --atomic \
+    #     --timeout 15m \
+    #     --values kubernetes/example-a/values/${{ matrix.environment }}/values.yaml \
+    #     --set image.tag=${{ github.sha }}
+    # - name: notify
+    #   uses: slackapi/slack-github-action@v1.24.0
+    #   if: always()
+    #   with:
+    #     payload: |
+    #       {
+    #         "text": "Environment : Production, Deploy Result: ${{ needs.deploy.result }} in environment: production, repository: ${{ github.repository }}.",
+    #         "blocks": [
+    #           {
+    #             "type": "section",
+    #             "text": {
+    #               "type": "mrkdwn",
+    #               "text": "Environment : Production, Deploy Result: ${{ needs.deploy.result }} in environment: production, repository: ${{ github.repository }}."
+    #             }
+    #           }
+    #         ]
+    #       }
+    #   env:
+    #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs: [prod-deploy]
+    steps: 
+      - name: checkout the code
+        uses: actions/checkout@v3
+      - name: gh auth login
+        run: |
+          echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
+      - name: create release using gh cli
+        run: |
+          gh release create ${GITHUB_HEAD_REF#*/} --target ${GITHUB_HEAD_REF} --notes "${GITHUB_HEAD_REF#*/} Release" --generate-notes
   
   
