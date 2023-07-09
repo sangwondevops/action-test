@@ -36,7 +36,8 @@ jobs:
       - name: check file list
         run: |
           ls action-module
-      - uses: ./action-module/common/set-env
+      - name: use set-env module
+        uses: ./action-module/common/set-env
         id: var
         with:
           REF_TYPE: ${{ github.ref_type }}
@@ -52,7 +53,7 @@ jobs:
       #   with:
       #     repository: "sangwondevops/action-module"
       #     path: ./action-module
-      # - name: Cache Node.js modules
+      # - name: use cache module
       #   uses: ./action-module/common/cache
       #   with:
       #     NODE_VERSION: '18'
@@ -76,11 +77,11 @@ jobs:
       #   with:
       #     repository: "sangwondevops/action-module"
       #     path: ./action-module
-      # - name: aws credentials
+      # - name: use aws credentials module
       #   uses: ./action-module/common/aws/credentials
       #   with:
       #     AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      # - name: Access ECR
+      # - name: use docker image module
       #   uses: ./action-module/common/docker/image
       #   with:
       #     ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }} 
@@ -106,7 +107,7 @@ jobs:
     #   uses: ./action-module/common/aws/credentials
     #   with:
     #     AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-    # - name: deploy kubernetes
+    # - name: use deploy kubernetes module
     #   uses: ./action-module/common/deploy/kubernetes
     #   with:
     #     EKS_CLUSTER: ${{ secrets.EKS_CLUSTER }} 
@@ -128,7 +129,7 @@ jobs:
       with:
         repository: "sangwondevops/action-module"
         path: ./action-module
-    - name: create-pr
+    - name: use create-pr module
       uses: ./action-module/common/create-pr
       with:
         PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }} 
@@ -146,7 +147,7 @@ jobs:
       with:
         repository: "sangwondevops/action-module"
         path: ./action-module
-    - name: notify (staging)
+    - name: use slack approve module (staging)
       if: |
         needs.set-environment.outputs.set-env == 'staging'
       uses: ./action-module/common/slack/approve
@@ -154,7 +155,7 @@ jobs:
         DEPLOY_JOB_STATUS: ${{ needs.deploy.result }}
         ENVIRONMENT: ${{ needs.set-environment.outputs.set-env }}
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-    - name: notify (dev,qa)
+    - name: use slack module (dev,qa)
       if: |
         needs.set-environment.outputs.set-env != 'staging'
       uses: ./action-module/common/slack
@@ -190,11 +191,11 @@ jobs:
     #   with:
     #     repository: "sangwondevops/action-module"
     #     path: ./action-module
-    # - name: aws credentials
+    # - name: use aws credentials module
     #   uses: ./action-module/common/aws/credentials
     #   with:
     #     AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-    # - name: deploy kubernetes
+    # - name: use deploy kubernetes module
     #   uses: ./action-module/common/deploy/kubernetes
     #   with:
     #     EKS_CLUSTER: ${{ secrets.EKS_CLUSTER }} 
@@ -202,14 +203,14 @@ jobs:
     #     HELM_CHART_PATH: kubernetes/example-a 
     #     NAMESPACE: example-a-production
     #     VALUES_PATH: ${{ vars.VALUES_PATH }}
-    # - name: notify(success)
+    # - name: use slack module (success)
     #   if: success()
     #   uses: ./action-module/common/slack
     #   with:
     #     DEPLOY_JOB_STATUS: success
     #     ENVIRONMENT: production
     #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-    # - name: notify(failure)
+    # - name: use slack module (failure)
     #   if: failure()
     #   uses: ./action-module/common/slack
     #   with:
@@ -228,7 +229,7 @@ jobs:
         with:
           repository: "sangwondevops/action-module"
           path: ./action-module
-      - name: create-release
+      - name: use create-release module
         uses: ./action-module/common/create-release
         with:
           PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }} 
