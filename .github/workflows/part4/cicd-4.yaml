@@ -153,6 +153,8 @@ jobs:
     steps:
     - name: checkout the code
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     - name: gh auth login
       run: |
         echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
