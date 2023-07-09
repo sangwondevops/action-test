@@ -1,4 +1,4 @@
-name: cicd-3 # Deploy develop, QA, production v0.1.12-rc.3 test
+name: cicd-3 # Deploy develop, QA, production v0.1.13-rc.1
 permissions:
   id-token: write
   contents: write
@@ -197,7 +197,7 @@ jobs:
         echo "github-sha: ${{ github.sha }}"
         git checkout release/${{ steps.extract.outputs.extract-tag }}
         git merge ${{ github.sha }}
-        git push origin HEAD:release/${{ steps.extract.outputs.extract-tag }}
+        git push origin release/${{ steps.extract.outputs.extract-tag }}
         
   slack:
     runs-on: ubuntu-latest
