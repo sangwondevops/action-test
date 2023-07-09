@@ -1,4 +1,4 @@
-name: cicd-1 # Deploy develop only
+name: cicd-1 # Deploy develop only / cicd1 test
 permissions:
   id-token: write
   contents: write
@@ -70,10 +70,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: [ build-image ]
-    strategy:
-      matrix:
-        environment: ["develop"]
-    environment: ${{ matrix.environment }}
+    environment: develop
     steps:
     - name: checkout the code
       uses: actions/checkout@v3
@@ -105,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [deploy]
     if: |
-      always() && (needs.deploy.result == 'success' || needs.deploy.result == 'failure')
+      always() && ( needs.deploy.result == 'success' || needs.deploy.result == 'failure' ) 
     steps:
     - name: checkout
       run: echo "hello"
@@ -114,13 +111,13 @@ jobs:
     #   with:
     #     payload: |
     #       {
-    #         "text": "Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}.",
+    #         "text": "Environment : Develop, Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}",
     #         "blocks": [
     #           {
     #             "type": "section",
     #             "text": {
     #               "type": "mrkdwn",
-    #               "text": "Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}."
+    #               "text": "Environment : Develop, Deploy Result: ${{ needs.deploy.result }} in repository: ${{ github.repository }}."
     #             }
     #           }
     #         ]
