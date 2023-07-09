@@ -1,4 +1,4 @@
-name: versioning cicd 
+name: versioning cicd 1
 permissions:
   id-token: write
   contents: write
