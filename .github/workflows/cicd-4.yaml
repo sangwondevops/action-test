@@ -191,8 +191,11 @@ jobs:
       if: |
         steps.var.outputs.is_branch == 'true'
       run: |
-        git checkout -b release/${{ steps.extract.outputs.extract-tag }}
-        git push -f origin release/${{ steps.extract.outputs.extract-tag }}
+        echo "extract-tag: ${{ steps.extract.outputs.extract-tag }}"
+        echo "github-sha: ${{ github.sha }}"
+        git checkout release/${{ steps.extract.outputs.extract-tag }}
+        git merge ${{ github.sha }}
+        git push origin release/${{ steps.extract.outputs.extract-tag }}
   
   slack:
     runs-on: ubuntu-latest
