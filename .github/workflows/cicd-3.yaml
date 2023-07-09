@@ -1,4 +1,4 @@
-name: cicd-3 # Deploy develop, QA, production v0.1.9-rc.2
+name: cicd-3 # Deploy develop, QA, production v0.1.10-rc.1
 permissions:
   id-token: write
   contents: write
@@ -192,10 +192,9 @@ jobs:
         steps.var.outputs.is_branch == 'true'
       run: |
         echo "extract-tag: ${{ steps.extract.outputs.extract-tag }}"
-        echo "set-tag: ${{ needs.set-environment.outputs.set-tag }}"
-        git fetch origin 
+        echo "github-sha: ${{ github.sha }}"
         git checkout release/${{ steps.extract.outputs.extract-tag }}
-        git merge tags/${{ needs.set-environment.outputs.set-tag }}
+        git merge ${{ github.sha }}
         git push origin release/${{ steps.extract.outputs.extract-tag }}
         
   slack:
