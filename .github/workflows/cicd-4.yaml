@@ -266,7 +266,7 @@ jobs:
   approve:
     runs-on: ubuntu-latest
     environment: approve
-    needs: [ set-environment, deploy, slack ]
+    needs: [ set-environment, deploy ]
     if: |
       needs.set-environment.outputs.set-env == 'staging'
     steps:
